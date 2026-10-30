@@ -32,6 +32,22 @@ export const T3BudSize = Schema.Int.check(
 export type T3BudSize = typeof T3BudSize.Type;
 export const DEFAULT_T3BUD_SIZE: T3BudSize = 64;
 
+/** The color behind T3Bud, as `#rrggbb`. The animal is drawn transparent over it. */
+export const T3BudBackground = Schema.String.check(Schema.isPattern(/^#[0-9a-f]{6}$/i));
+export type T3BudBackground = typeof T3BudBackground.Type;
+export const DEFAULT_T3BUD_BACKGROUND: T3BudBackground = "#1a1a44";
+export const T3BUD_BACKGROUND_PRESETS: ReadonlyArray<{
+  readonly color: T3BudBackground;
+  readonly label: string;
+}> = [
+  { color: DEFAULT_T3BUD_BACKGROUND, label: "Night" },
+  { color: "#27272a", label: "Graphite" },
+  { color: "#1f4d3a", label: "Forest" },
+  { color: "#4b2361", label: "Plum" },
+  { color: "#8a3a1e", label: "Ember" },
+  { color: "#9cc9e8", label: "Sky" },
+];
+
 export const VoiceCreateCallTokenResult = Schema.Struct({
   token: TrimmedNonEmptyString,
   agentId: TrimmedNonEmptyString,

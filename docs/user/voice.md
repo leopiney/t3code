@@ -21,6 +21,7 @@ environment.
 5. Pick T3Bud's **Animal**: a wolf, frog, capybara, or axolotl. The agent plays the one you pick on
    your next call. This is also per device.
 6. Drag **Size** to make T3Bud's circle bigger or smaller. This is also per device.
+7. Pick a **Background** color for T3Bud's circle, or choose your own. This is also per device.
 
 Calls go through a connected environment that has a key and lets this device start calls, your
 primary environment first. During a call, T3Bud shows which one it goes through.

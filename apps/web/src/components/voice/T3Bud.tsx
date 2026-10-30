@@ -218,7 +218,8 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
   };
 
   return (
-    <div className="pointer-events-none fixed z-40 size-16" style={{ right, bottom }}>
+    // z-50 and mounted after the app shell: above the terminal drawer and panels, below portaled dialogs and menus.
+    <div className="pointer-events-none fixed z-50 size-16" style={{ right, bottom }}>
       {layout.open ? (
         <section
           aria-label="T3Bud"

@@ -14,6 +14,7 @@ import {
   type PullRequestMergeMethod,
   type SidebarProjectGroupingMode,
   T3BudAnimal,
+  T3BudBackground,
   VoiceAgentSpeakMode,
 } from "@t3tools/contracts";
 import type { AndroidNavigationStyle } from "../lib/androidNavigationStyle";
@@ -89,6 +90,7 @@ const ThreadProject = Schema.Struct({
 const isThreadProject = Schema.is(ThreadProject);
 const isVoiceAgentSpeakMode = Schema.is(VoiceAgentSpeakMode);
 const isT3BudAnimal = Schema.is(T3BudAnimal);
+const isT3BudBackground = Schema.is(T3BudBackground);
 
 export interface Preferences {
   readonly navigationTabOrder?: readonly string[];
@@ -135,6 +137,7 @@ export interface Preferences {
   readonly t3BudEnabled?: boolean;
   readonly t3BudSpeaks?: VoiceAgentSpeakMode;
   readonly t3BudAnimal?: T3BudAnimal;
+  readonly t3BudBackground?: T3BudBackground;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -215,6 +218,7 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     t3BudEnabled?: boolean;
     t3BudSpeaks?: VoiceAgentSpeakMode;
     t3BudAnimal?: T3BudAnimal;
+    t3BudBackground?: T3BudBackground;
   } = {};
 
   if (Array.isArray(parsed.hiddenNavigationTabs)) {
@@ -377,6 +381,9 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (isT3BudAnimal(parsed.t3BudAnimal)) {
     preferences.t3BudAnimal = parsed.t3BudAnimal;
+  }
+  if (isT3BudBackground(parsed.t3BudBackground)) {
+    preferences.t3BudBackground = parsed.t3BudBackground;
   }
   return preferences;
 }

@@ -4,7 +4,14 @@ import {
   squashAtomCommandFailure,
   type AtomCommandResult,
 } from "@t3tools/client-runtime/state/runtime";
-import { AuthSettingsWriteScope, T3BudAnimal, type VoiceAgentSpeakMode } from "@t3tools/contracts";
+import {
+  AuthSettingsWriteScope,
+  DEFAULT_T3BUD_BACKGROUND,
+  T3BUD_BACKGROUND_PRESETS,
+  T3BudAnimal,
+  type T3BudBackground,
+  type VoiceAgentSpeakMode,
+} from "@t3tools/contracts";
 import { AsyncResult } from "effect/reactivity";
 import { useState } from "react";
 import { Image } from "expo-image";
@@ -26,6 +33,7 @@ import { useEnvironmentsWithScope } from "../../state/session";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { voiceEnvironment } from "../../state/voice";
 import { T3BUD_ANIMAL_IMAGES, T3BUD_ANIMAL_LABELS } from "../voice-agent/t3BudAnimals";
+import { ColorPickerSheet, SpectrumSwatch } from "./components/ColorPickerSheet";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { SettingsSection } from "./components/SettingsSection";
 import { SettingsSwitchRow } from "./components/SettingsSwitchRow";
@@ -74,6 +82,7 @@ function T3BudSettingsSections() {
   const stored = AsyncResult.isSuccess(preferences) ? preferences.value : null;
   const speaks = stored?.t3BudSpeaks ?? "all";
   const animal = stored?.t3BudAnimal ?? "wolf";
+  const background = stored?.t3BudBackground ?? DEFAULT_T3BUD_BACKGROUND;
   return (
     <>
       <SettingsSection
@@ -91,8 +100,16 @@ function T3BudSettingsSections() {
       <SettingsSection title="Animal" footer="T3Bud plays the same animal on calls.">
         <T3BudAnimalPicker
           value={animal}
+          background={background}
           disabled={!ready}
           onChange={(next) => savePreferences({ t3BudAnimal: next })}
+        />
+      </SettingsSection>
+      <SettingsSection title="Background" footer="The color of T3Bud's circle on this device.">
+        <T3BudBackgroundPicker
+          value={background}
+          disabled={!ready}
+          onChange={(next) => savePreferences({ t3BudBackground: next })}
         />
       </SettingsSection>
       <SettingsSection
@@ -118,6 +135,7 @@ function T3BudSettingsSections() {
 /** Every animal as its icon, four across; the chosen one is ringed and the rest dimmed. */
 function T3BudAnimalPicker(props: {
   readonly value: T3BudAnimal;
+  readonly background: T3BudBackground;
   readonly disabled: boolean;
   readonly onChange: (animal: T3BudAnimal) => void;
 }) {
@@ -143,7 +161,12 @@ function T3BudAnimalPicker(props: {
             >
               <Image
                 source={T3BUD_ANIMAL_IMAGES[option]}
-                style={{ width: 52, height: 52 }}
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 26,
+                  backgroundColor: props.background,
+                }}
                 contentFit="contain"
                 accessibilityIgnoresInvertColors
               />
@@ -157,6 +180,70 @@ function T3BudAnimalPicker(props: {
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+/** The preset colors as swatches, then one that opens a picker for any color; the chosen one is ringed. */
+function T3BudBackgroundPicker(props: {
+  readonly value: T3BudBackground;
+  readonly disabled: boolean;
+  readonly onChange: (color: T3BudBackground) => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const value = props.value.toLowerCase();
+  const custom = !T3BUD_BACKGROUND_PRESETS.some((preset) => preset.color === value);
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      className="flex-row justify-between bg-grouped-card px-4 py-3"
+    >
+      {T3BUD_BACKGROUND_PRESETS.map((preset) => {
+        const selected = value === preset.color;
+        return (
+          <Pressable
+            key={preset.color}
+            accessibilityRole="radio"
+            accessibilityLabel={preset.label}
+            accessibilityState={{ checked: selected, disabled: props.disabled }}
+            disabled={props.disabled}
+            hitSlop={4}
+            onPress={() => props.onChange(preset.color)}
+            className={cn(
+              "rounded-full border-2 p-0.5",
+              selected ? "border-primary" : "border-transparent",
+            )}
+          >
+            <View
+              className="size-[32px] rounded-full border border-border"
+              style={{ backgroundColor: preset.color }}
+            />
+          </Pressable>
+        );
+      })}
+      <Pressable
+        accessibilityRole="radio"
+        accessibilityLabel="Custom color"
+        accessibilityHint="Opens a color picker"
+        accessibilityState={{ checked: custom, disabled: props.disabled }}
+        disabled={props.disabled}
+        hitSlop={4}
+        onPress={() => setPicking(true)}
+        className={cn(
+          "rounded-full border-2 p-0.5",
+          custom ? "border-primary" : "border-transparent",
+        )}
+      >
+        <SpectrumSwatch color={value} size={32} />
+      </Pressable>
+      {picking ? (
+        <ColorPickerSheet
+          title="T3Bud background"
+          value={value}
+          onClose={() => setPicking(false)}
+          onDone={props.onChange}
+        />
+      ) : null}
     </View>
   );
 }

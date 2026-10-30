@@ -5,12 +5,16 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import {
+  DEFAULT_T3BUD_BACKGROUND,
   DEFAULT_T3BUD_SIZE,
   MAX_T3BUD_SIZE,
   MIN_T3BUD_SIZE,
+  T3BUD_BACKGROUND_PRESETS,
   T3BudAnimal,
+  T3BudBackground,
   VoiceAgentSpeakMode,
 } from "@t3tools/contracts";
+import * as Schema from "effect/Schema";
 import { ExternalLinkIcon } from "lucide-react";
 import { useState, type CSSProperties } from "react";
 
@@ -29,6 +33,7 @@ import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../
 import { Switch } from "../ui/switch";
 import {
   selectT3BudAnimal,
+  selectT3BudBackground,
   selectT3BudEnabled,
   selectT3BudSize,
   selectT3BudSpeaks,
@@ -36,6 +41,7 @@ import {
 } from "../voice/t3BudCall";
 import { SecretInput } from "./SecretInput";
 import { useSettingsScope } from "./SettingsScopeContext";
+import { ThemeColorPicker } from "./ThemeColorPicker";
 import { searchableSetting } from "./settingsSearch";
 import {
   SettingResetButton,
@@ -43,6 +49,8 @@ import {
   SettingsRow,
   SettingsSection,
 } from "./settingsLayout";
+
+const isT3BudBackground = Schema.is(T3BudBackground);
 
 const ELEVENLABS_API_KEYS_URL = "https://elevenlabs.io/app/developers/api-keys";
 
@@ -70,6 +78,7 @@ export function VoiceSettingsPanel() {
   const speakMode = useClientSettings(selectT3BudSpeaks);
   const animal = useClientSettings(selectT3BudAnimal);
   const size = useClientSettings(selectT3BudSize);
+  const background = useClientSettings(selectT3BudBackground);
   const sizeRatio = (size - MIN_T3BUD_SIZE) / (MAX_T3BUD_SIZE - MIN_T3BUD_SIZE);
   const sizeSliderStyle = {
     "--settings-slider-progress": `${sizeRatio * 100}%`,
@@ -120,6 +129,7 @@ export function VoiceSettingsPanel() {
         >
           <T3BudAnimalPicker
             value={animal}
+            background={background}
             onValueChange={(next) => void updateClientSettings({ t3BudAnimal: next })}
           />
         </SettingsRow>
@@ -167,6 +177,26 @@ export function VoiceSettingsPanel() {
           }
         />
         <SettingsRow
+          {...searchableSetting("t3bud-background")}
+          description="The color of T3Bud's circle on this device."
+          resetAction={
+            background !== DEFAULT_T3BUD_BACKGROUND ? (
+              <SettingResetButton
+                label="T3Bud background"
+                onClick={() =>
+                  void updateClientSettings({ t3BudBackground: DEFAULT_T3BUD_BACKGROUND })
+                }
+              />
+            ) : null
+          }
+          control={
+            <T3BudBackgroundPicker
+              value={background}
+              onValueChange={(next) => void updateClientSettings({ t3BudBackground: next })}
+            />
+          }
+        />
+        <SettingsRow
           {...searchableSetting("t3bud-speaks")}
           description="What T3Bud says on a call without a question from you. Approvals, questions, failures and usage limits need you. Everything else still reaches it quietly, so you can ask."
           control={
@@ -200,9 +230,11 @@ export function VoiceSettingsPanel() {
 /** Every animal as its icon; the chosen one is ringed and the rest dim until hovered. */
 function T3BudAnimalPicker({
   value,
+  background,
   onValueChange,
 }: {
   readonly value: T3BudAnimal;
+  readonly background: T3BudBackground;
   readonly onValueChange: (animal: T3BudAnimal) => void;
 }) {
   return (
@@ -227,12 +259,53 @@ function T3BudAnimalPicker({
             draggable={false}
             width={56}
             height={56}
-            className="size-14 rounded-full"
+            className="size-14 rounded-full bg-t3bud"
+            style={{ backgroundColor: background }}
           />
           <span className="text-xs font-medium">{ANIMAL_LABELS[option]}</span>
         </RadioPrimitive.Root>
       ))}
     </RadioGroup>
+  );
+}
+
+/** The preset swatches, then a picker for any other color. */
+function T3BudBackgroundPicker({
+  value,
+  onValueChange,
+}: {
+  readonly value: T3BudBackground;
+  readonly onValueChange: (color: T3BudBackground) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <RadioGroup
+        aria-label="T3Bud's background color"
+        value={value.toLowerCase()}
+        onValueChange={(next) => {
+          if (isT3BudBackground(next)) onValueChange(next);
+        }}
+        className="flex-row flex-wrap"
+      >
+        {T3BUD_BACKGROUND_PRESETS.map((preset) => (
+          <RadioPrimitive.Root
+            key={preset.color}
+            value={preset.color}
+            aria-label={preset.label}
+            className="size-6 cursor-pointer rounded-full border border-foreground/30 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-checked:ring-2 data-checked:ring-inset data-checked:ring-primary"
+            style={{ backgroundColor: preset.color }}
+          />
+        ))}
+      </RadioGroup>
+      <ThemeColorPicker
+        label="T3Bud background"
+        spectrum
+        value={value}
+        onChange={(next) => {
+          if (isT3BudBackground(next)) onValueChange(next.toLowerCase());
+        }}
+      />
+    </div>
   );
 }
 

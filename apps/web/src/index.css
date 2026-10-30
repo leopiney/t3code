@@ -220,8 +220,12 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
       transparent calc(var(--chat-composer-attachment-overlap) + 10px)
     );
   --color-zinc-25: oklch(99.2% 0 0);
-  /* T3Bud's night backdrop in every theme: the head is lit for it. */
-  --background-image-t3bud: radial-gradient(circle at 35% 30%, #3a3b8f, #1a1a44 72%);
+  /* A highlight over T3Bud's chosen background color, lit from where the head is. */
+  --background-image-t3bud: radial-gradient(
+    circle at 35% 30%,
+    rgb(255 255 255 / 16%),
+    transparent 72%
+  );
   --animate-skeleton: skeleton 2.4s infinite;
   /* Duty-cycled indicator animations: long holds with stepped ramps, so the
      compositor updates discrete frames instead of every vsync. */

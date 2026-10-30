@@ -36,6 +36,7 @@ const SETTINGS_SEARCH_TERMS = {
     "frog",
     "capybara",
     "axolotl",
+    "background",
     "elevenlabs",
     "voice agent",
     "api key",

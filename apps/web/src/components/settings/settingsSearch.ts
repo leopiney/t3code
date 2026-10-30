@@ -954,6 +954,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["t3bud size width circle diameter bigger smaller scale avatar"],
   },
   {
+    id: "t3bud-background",
+    title: "Background",
+    to: "/settings/voice",
+    searchTerms: ["t3bud background color colour circle disc fill"],
+  },
+  {
     id: "t3bud-speaks",
     title: "Speak updates aloud",
     to: "/settings/voice",

@@ -1,5 +1,6 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { VoiceFeedEntry, VoiceSessionState } from "@t3tools/client-runtime/voice/types";
+import { DEFAULT_T3BUD_BACKGROUND } from "@t3tools/contracts";
 import { AsyncResult } from "effect/reactivity";
 import { Image } from "expo-image";
 import { useState } from "react";
@@ -66,8 +67,9 @@ const FEED_TONE_CLASS: Record<VoiceFeedEntry["tone"], string> = {
 function BuddyAvatar(props: { readonly state: VoiceSessionState; readonly size: number }) {
   const { state, size } = props;
   const preferences = useAtomValue(mobilePreferencesAtom);
-  const animal =
-    (AsyncResult.isSuccess(preferences) ? preferences.value.t3BudAnimal : undefined) ?? "wolf";
+  const stored = AsyncResult.isSuccess(preferences) ? preferences.value : null;
+  const animal = stored?.t3BudAnimal ?? "wolf";
+  const background = stored?.t3BudBackground ?? DEFAULT_T3BUD_BACKGROUND;
   return (
     <View
       className={cn(
@@ -78,7 +80,7 @@ function BuddyAvatar(props: { readonly state: VoiceSessionState; readonly size: 
             ? "border-primary"
             : "border-transparent",
       )}
-      style={{ width: size + 4, height: size + 4 }}
+      style={{ width: size + 4, height: size + 4, backgroundColor: background }}
     >
       <Image
         source={T3BUD_ANIMAL_IMAGES[animal]}

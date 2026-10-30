@@ -40,6 +40,7 @@ import { createWebVoiceSession } from "./webVoiceSession";
 import {
   attachT3BudSession,
   selectT3BudAnimal,
+  selectT3BudBackground,
   selectT3BudSize,
   selectT3BudSpeaks,
   t3BudAssetUrl,
@@ -164,6 +165,7 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
   const callShortcut = shortcutLabelForCommand(keybindings, "voice.toggleCall");
   const animal = useClientSettings(selectT3BudAnimal);
   const size = useClientSettings(selectT3BudSize);
+  const background = useClientSettings(selectT3BudBackground);
   // Mounted here so the permission reads stay warm for the palette, the shortcut and the call.
   const readiness = useAtomValue(voiceCallReadinessAtom);
   const viewportWidth = useSyncExternalStore(subscribeResize, readViewportWidth);
@@ -349,6 +351,7 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
                 "pointer-events-auto relative flex size-full touch-none items-center justify-center rounded-full border-2 bg-t3bud shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [-webkit-app-region:no-drag]",
                 RING_CLASS[state.status],
               )}
+              style={{ backgroundColor: background }}
               onPointerDown={(event) => {
                 if (event.button !== 0) return;
                 dragRef.current = {
@@ -477,7 +480,6 @@ function BuddyAvatar({
       src={t3BudAssetUrl(animal, "png")}
       alt=""
       draggable={false}
-      className="rounded-full"
       width={size}
       height={size}
       style={{ width: size, height: size }}

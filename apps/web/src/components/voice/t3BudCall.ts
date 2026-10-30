@@ -34,9 +34,10 @@ export const selectT3BudEnabled = (settings: ClientSettings) => settings.t3BudEn
 export const selectT3BudSpeaks = (settings: ClientSettings) => settings.t3BudSpeaks;
 export const selectT3BudAnimal = (settings: ClientSettings) => settings.t3BudAnimal;
 export const selectT3BudSize = (settings: ClientSettings) => settings.t3BudSize;
+export const selectT3BudBackground = (settings: ClientSettings) => settings.t3BudBackground;
 
 const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-/** An animal's 3D head (`glb`) or its flat icon on the night disc (`png`). */
+/** An animal's 3D head (`glb`) or its flat icon (`png`), both transparent over T3Bud's background. */
 export const t3BudAssetUrl = (animal: T3BudAnimal, kind: "glb" | "png") =>
   `${ASSET_BASE}/t3bud/${animal}.${kind}`;
 

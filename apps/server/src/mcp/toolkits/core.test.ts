@@ -441,6 +441,8 @@ const clientScope = (
   capabilities: new Set(["orchestration", "worktree", "pull-requests"]),
 });
 
+const settleInputs: Array<unknown> = [];
+
 it.effect("a client caller targets any thread within its ceiling and cannot act as a thread", () =>
   Effect.gen(function* () {
     const server = yield* McpServer.McpServer;
@@ -466,6 +468,23 @@ it.effect("a client caller targets any thread within its ceiling and cannot act 
     );
     expect(pinned.isError).toBe(false);
     expect(pinned.structuredContent).toMatchObject({ sequence: 7 });
+
+    const settled = yield* call(
+      "t3_thread_organize",
+      { action: "settle", threadId: "other-project-thread", note: "wrapped up" },
+      clientScope("auto"),
+    );
+    expect(settled.structuredContent).toMatchObject({ sequence: 8 });
+    expect(settleInputs).toMatchObject([
+      { threadId: "other-project-thread", byOwnAgent: false, note: "wrapped up" },
+    ]);
+
+    const pinnedWithNote = yield* call(
+      "t3_thread_organize",
+      { action: "pin", threadId: "other-project-thread", note: "done" },
+      clientScope("auto"),
+    );
+    expect(declaredFailure(pinnedWithNote)).toMatchObject({ code: "invalid_request" });
 
     const aboveCeiling = yield* call(
       "t3_thread_organize",
@@ -502,6 +521,11 @@ it.effect("a client caller targets any thread within its ceiling and cannot act 
                 },
               } as never),
             dispatch: () => Effect.succeed({ sequence: 7, storedEvents: [] }),
+            settleThread: (input) =>
+              Effect.sync(() => {
+                settleInputs.push(input);
+                return { sequence: 8 };
+              }),
           }),
         ),
       ),

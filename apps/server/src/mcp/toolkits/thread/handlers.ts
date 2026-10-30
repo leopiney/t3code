@@ -333,8 +333,18 @@ export const layer = McpToolAccess.toLayer(ThreadToolkit, {
       const common = { commandId: yield* newCommandId(), threadId: projection.thread.id };
       if (input.action === "settle") {
         return yield* threads
-          .settleThread({ ...common, byOwnAgent: caller?.id === projection.thread.id })
+          .settleThread({
+            ...common,
+            byOwnAgent: caller?.id === projection.thread.id,
+            ...(input.note === undefined ? {} : { note: input.note }),
+          })
           .pipe(Effect.mapError(dispatchFailure));
+      }
+      if (input.note !== undefined) {
+        return yield* new OrchestratorMcpFailure({
+          code: "invalid_request",
+          message: "note applies only to settle.",
+        });
       }
       let command: OrchestrationV2Command;
       switch (input.action) {

@@ -275,6 +275,17 @@ function SidebarThreadTooltip({
           ) : null
         }
       >
+        {thread.settledOverride === "settled" && thread.settledNote ? (
+          <div className="flex min-w-0 items-start gap-2">
+            <CircleCheckIcon
+              aria-hidden
+              className="mt-0.5 size-3 shrink-0 stroke-muted-foreground"
+            />
+            <div className="min-w-0 flex-1 wrap-break-word text-foreground/75">
+              {thread.settledNote}
+            </div>
+          </div>
+        ) : null}
         {projectDisplayName ? (
           <div className="flex min-w-0 items-center gap-2">
             {project ? <ProjectFavicon project={project} className="size-3 shrink-0" /> : null}

@@ -29,6 +29,7 @@ export type SettingsPath =
   | "/settings/browser"
   | "/settings/devices"
   | "/settings/scheduled-tasks"
+  | "/settings/voice"
   | "/settings/source-control"
   | "/settings/worktrees"
   | "/settings/connections"
@@ -99,6 +100,7 @@ export const SETTINGS_SECTION_LABELS: Readonly<Record<SettingsPath, string>> = {
   "/settings/browser": "Browser",
   "/settings/devices": "Devices",
   "/settings/scheduled-tasks": "Scheduled tasks",
+  "/settings/voice": "Voice",
   "/settings/source-control": "Source control",
   "/settings/worktrees": "Worktrees",
   "/settings/connections": "Environments",
@@ -134,6 +136,7 @@ export const SETTINGS_NAV_GROUPS: ReadonlyArray<{
       "/settings/browser",
       "/settings/devices",
       "/settings/scheduled-tasks",
+      "/settings/voice",
     ],
   },
   {
@@ -919,6 +922,40 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["address bar duckduckgo google bing brave kagi ecosia custom"],
   },
   {
+    id: "voice-elevenlabs-key",
+    title: "ElevenLabs API key",
+    to: "/settings/voice",
+    searchTerms: ["elevenlabs voice agent t3bud api key secret token call conversational"],
+    environmentOnly: true,
+  },
+  {
+    id: "voice-agent-setup",
+    title: "Set up voice agent",
+    to: "/settings/voice",
+    searchTerms: ["elevenlabs t3bud voice agent sync create check key"],
+    environmentOnly: true,
+  },
+  {
+    id: "t3bud-enabled",
+    title: "Show T3Bud",
+    to: "/settings/voice",
+    searchTerms: ["t3bud voice agent call talk corner elevenlabs microphone"],
+  },
+  {
+    id: "t3bud-animal",
+    title: "Animal",
+    to: "/settings/voice",
+    searchTerms: ["t3bud animal mascot wolf frog capybara axolotl avatar"],
+  },
+  {
+    id: "t3bud-speaks",
+    title: "Speak updates aloud",
+    to: "/settings/voice",
+    searchTerms: [
+      "t3bud voice agent announcements finished approval question failed usage limit quiet",
+    ],
+  },
+  {
     id: "pull-request-links-open-in-app",
     title: "Open pull requests in T3 Code",
     to: "/settings/diffs",
@@ -1198,6 +1235,7 @@ const SETTINGS_CATEGORY_SCOPES: Readonly<Record<SettingsPath, SettingsSearchScop
   "/settings/access": "connections",
   "/settings/secrets": null,
   "/settings/scheduled-tasks": null,
+  "/settings/voice": null,
   "/settings/maintenance": null,
   "/settings/labs": null,
   "/settings/about": null,

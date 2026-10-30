@@ -75,6 +75,8 @@ import { installUiRuntimeMemoryWarningGc } from "./lib/useUiRuntimeMemoryWarning
 import { SubscriptionUsageCoordinator } from "./widgets/SubscriptionUsageCoordinator";
 import { installSubscriptionUsageRefresh } from "./widgets/useSubscriptionUsage";
 import { GlobalVoiceInputControl } from "./features/voice-input/GlobalVoiceInputControl";
+import { T3BudHost } from "./features/voice-agent/T3BudHost";
+import { setVoiceAgentPathname } from "./features/voice-agent/voiceOpenThread";
 import { restoreSettingsLinkState } from "./features/settings/settings-navigation";
 import {
   hydrateWorkspaceSelections,
@@ -158,7 +160,9 @@ function handleNavigationStateChange(state: NavigationState | undefined): void {
   resolvePendingNewTaskPromptLink(state);
   resolvePendingThreadPromptLink(state);
   if (!state) return;
-  setAgentNotificationPathname(workspaceLocationFromState(state).pathname);
+  const { pathname } = workspaceLocationFromState(state);
+  setAgentNotificationPathname(pathname);
+  setVoiceAgentPathname(pathname);
   recordAppShortcutNavigationState(state);
   pruneNewTaskFlowStates(state);
   pruneNewTaskBranchCheckouts(state);
@@ -245,6 +249,7 @@ function AppContent() {
                 <ProjectChipIconRasterizer />
               </NativeLayoutMetricsProvider>
             </GlobalVoiceInputControl>
+            <T3BudHost navigate={linkToAppPath} />
             <OverlayPortalHost />
           </SafeAreaProvider>
         </KeyboardProvider>

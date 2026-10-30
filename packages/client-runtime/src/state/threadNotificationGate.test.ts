@@ -1,10 +1,10 @@
-import { WORKING_EXIT_GRACE_MS } from "@t3tools/client-runtime/state/thread-inbox";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+import { WORKING_EXIT_GRACE_MS } from "./threadInbox.ts";
 import {
   createThreadNotificationGate,
   type ThreadNotificationObservation,
-} from "./ThreadNotificationCoordinator.logic";
+} from "./threadNotificationGate.ts";
 
 const working: ThreadNotificationObservation = {
   attention: null,

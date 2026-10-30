@@ -13,6 +13,8 @@ import {
   type ProviderInstanceId,
   type PullRequestMergeMethod,
   type SidebarProjectGroupingMode,
+  T3BudAnimal,
+  VoiceAgentSpeakMode,
 } from "@t3tools/contracts";
 import type { AndroidNavigationStyle } from "../lib/androidNavigationStyle";
 import type { ComposerEnterBehavior } from "../lib/composerEnterBehavior";
@@ -85,6 +87,8 @@ const ThreadProject = Schema.Struct({
   projectId: Schema.NonEmptyString,
 });
 const isThreadProject = Schema.is(ThreadProject);
+const isVoiceAgentSpeakMode = Schema.is(VoiceAgentSpeakMode);
+const isT3BudAnimal = Schema.is(T3BudAnimal);
 
 export interface Preferences {
   readonly navigationTabOrder?: readonly string[];
@@ -128,6 +132,9 @@ export interface Preferences {
   readonly threadListFilters?: ThreadListFilters;
   readonly pullRequestListFilters?: PullRequestListPreferences;
   readonly workspaceSelections?: WorkspaceSelections;
+  readonly t3BudEnabled?: boolean;
+  readonly t3BudSpeaks?: VoiceAgentSpeakMode;
+  readonly t3BudAnimal?: T3BudAnimal;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -205,6 +212,9 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     threadListFilters?: ThreadListFilters;
     pullRequestListFilters?: PullRequestListPreferences;
     workspaceSelections?: WorkspaceSelections;
+    t3BudEnabled?: boolean;
+    t3BudSpeaks?: VoiceAgentSpeakMode;
+    t3BudAnimal?: T3BudAnimal;
   } = {};
 
   if (Array.isArray(parsed.hiddenNavigationTabs)) {
@@ -358,6 +368,15 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (isWorkspaceSelections(parsed.workspaceSelections)) {
     preferences.workspaceSelections = parsed.workspaceSelections;
+  }
+  if (typeof parsed.t3BudEnabled === "boolean") {
+    preferences.t3BudEnabled = parsed.t3BudEnabled;
+  }
+  if (isVoiceAgentSpeakMode(parsed.t3BudSpeaks)) {
+    preferences.t3BudSpeaks = parsed.t3BudSpeaks;
+  }
+  if (isT3BudAnimal(parsed.t3BudAnimal)) {
+    preferences.t3BudAnimal = parsed.t3BudAnimal;
   }
   return preferences;
 }

@@ -50,6 +50,13 @@ describe("RPC authorization scopes", () => {
     );
   });
 
+  it("keeps voice calls, whose agent acts on threads, behind operate scope and agent setup behind settings", () => {
+    expect(requiredScopeForRpcMethod(WS_METHODS.voiceCreateCallToken)).toBe(
+      AuthOrchestrationOperateScope,
+    );
+    expect(requiredScopeForRpcMethod(WS_METHODS.voiceSyncAgent)).toBe(AuthSettingsWriteScope);
+  });
+
   it("separates passive terminal observation from operations that can change a shell", () => {
     for (const method of [WS_METHODS.terminalObserve, WS_METHODS.subscribeTerminalMetadata]) {
       expect(requiredScopeForRpcMethod(method)).toBe(AuthTerminalReadScope);

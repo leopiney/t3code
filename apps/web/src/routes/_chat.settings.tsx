@@ -85,7 +85,12 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
       </SettingsScopeNotice>
     );
   }
-  if (SETTINGS_DEVICE_ONLY_PATHS.has(pathname) || pathname === "/settings/projects") {
+  // Voice also holds device settings, among them the only switch that hides T3Bud.
+  if (
+    SETTINGS_DEVICE_ONLY_PATHS.has(pathname) ||
+    pathname === "/settings/projects" ||
+    pathname === "/settings/voice"
+  ) {
     return children;
   }
   if (scope.kind === "unavailable")
@@ -150,7 +155,11 @@ function SettingsRouteLayout() {
   return (
     <SettingsScopeProvider
       search={rawSearch}
-      singleEnvironment={pathname === "/settings/providers" || pathname === "/settings/secrets"}
+      singleEnvironment={
+        pathname === "/settings/providers" ||
+        pathname === "/settings/secrets" ||
+        pathname === "/settings/voice"
+      }
       onChange={(next) => {
         // Send every axis so retain middleware recognizes "all" as an explicit target.
         void navigate({

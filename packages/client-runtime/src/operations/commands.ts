@@ -764,6 +764,12 @@ export const startThreadTurn = Effect.fn("EnvironmentCommands.startThreadTurn")(
   });
 });
 
+export const readThreadProjection = Effect.fn("EnvironmentCommands.readThreadProjection")(
+  function* (input: ThreadCommandInput) {
+    return yield* getProjection(input.threadId);
+  },
+);
+
 export const interruptThreadTurn = Effect.fn("EnvironmentCommands.interruptThreadTurn")(function* (
   input: InterruptThreadTurnInput,
 ) {

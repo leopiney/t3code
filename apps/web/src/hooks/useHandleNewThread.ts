@@ -32,6 +32,7 @@ import {
 import {
   hasExplicitComposerModelSelection,
   resolveNewDraftStartFromOrigin,
+  resolveNewThreadModelDefaults,
   resolveNewThreadModelSelectionOverride,
 } from "../lib/chatThreadActions";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/shell";
@@ -48,8 +49,6 @@ import { useAtomValue } from "@effect/atom-react";
 import { defaultProjectFallbackReadyAtom } from "../state/projects";
 import { useThreadRouteTarget } from "./useThreadRouteTarget";
 import { readUnloadedThreadCount } from "../state/olderSettledShelf";
-import { resolveProjectDefaultProviderModelSelection } from "../providerInstances";
-import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
 
 export const LAST_USED_PROJECT_STORAGE_KEY = "t3code:last-used-project:v1";
 export const lastUsedProjectKeySchema = Schema.NullOr(Schema.String);
@@ -161,26 +160,20 @@ export function createNewThreadHandler(router: AnyRouter) {
       project?.id ?? null,
       project,
     );
-    const configuredDefaultModelSelection = projectSettings.settings.defaultModelSelection ?? null;
-    const fallbackResolution = resolveNewThreadModelSelection({
-      defaultSelection:
-        configuredDefaultModelSelection ??
-        (carryModelSelection || useComposerDraftStore.getState().stickyActiveProvider !== null
-          ? null
-          : resolveProjectDefaultProviderModelSelection(
-              environmentServerConfigs.get(projectRef.environmentId)?.providers ?? [],
-              targetServerSettings,
-              projectRef.projectId,
-            )),
-      fallbackSelection: targetServerSettings.fallbackModelSelection ?? null,
+    const { stickyActiveProvider, stickyModelSelectionByProvider } =
+      useComposerDraftStore.getState();
+    const projectDefaultModelSelection = resolveNewThreadModelDefaults({
+      projectDefault: projectSettings.settings.defaultModelSelection ?? null,
+      composerPick:
+        carryModelSelection ??
+        (stickyActiveProvider
+          ? (stickyModelSelectionByProvider[stickyActiveProvider] ?? null)
+          : null),
       providers: environmentServerConfigs.get(projectRef.environmentId)?.providers ?? [],
       settings: targetServerSettings,
       projectId: projectRef.projectId,
       now: Date.now(),
-    });
-    const projectDefaultModelSelection = fallbackResolution.fallback
-      ? fallbackResolution.selection
-      : configuredDefaultModelSelection;
+    }).override;
     const defaultRuntimeMode = projectSettings.settings.defaultRuntimeMode;
     const resolveModelSelectionOverride = (destinationDraftId: DraftId) =>
       resolveNewThreadModelSelectionOverride({

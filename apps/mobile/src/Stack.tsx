@@ -122,6 +122,7 @@ import {
 } from "./features/settings/SettingsOpenSourceLicensesRouteScreen";
 import { SettingsProjectGroupingRouteScreen } from "./features/settings/SettingsProjectGroupingRouteScreen";
 import { SettingsProjectOverviewRouteScreen } from "./features/settings/SettingsProjectOverviewRouteScreen";
+import { SettingsVoiceAgentRouteScreen } from "./features/settings/SettingsVoiceAgentRouteScreen";
 import { UsageLimitAccountScreen } from "./features/usage/UsageLimitsPooled";
 import { UsageRouteScreen } from "./features/usage/UsageRouteScreen";
 import { SettingsAboutRouteScreen } from "./features/settings/SettingsAboutRouteScreen";
@@ -275,6 +276,11 @@ const SETTINGS_SCREENS = {
   SettingsVoiceModels: createNativeStackScreen({
     screen: SettingsVoiceModelsRouteScreen,
     options: SEARCH_SHEET_ROUTE,
+  }),
+  SettingsVoiceAgent: createNativeStackScreen({
+    screen: SettingsVoiceAgentRouteScreen,
+    linking: "settings/voice-agent",
+    options: settingsPage("Voice agent"),
   }),
   SettingsFollowUp: createNativeStackScreen({
     screen: SettingsFollowUpRouteScreen,

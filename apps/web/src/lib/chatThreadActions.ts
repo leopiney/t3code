@@ -4,8 +4,15 @@ import type {
   ModelSelection,
   ProjectId,
   ScopedProjectRef,
+  ServerProvider,
+  ServerSettings,
 } from "@t3tools/contracts";
+import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
 import type { ComposerThreadDraftState, DraftThreadEnvMode } from "../composerDraftStore";
+import {
+  providerInstanceEntriesFor,
+  resolveProjectDefaultProviderModelSelection,
+} from "../providerInstances";
 
 type ComposerModelSelectionState = Pick<
   ComposerThreadDraftState,
@@ -53,6 +60,42 @@ export function resolveNewThreadModelSelectionOverride(input: {
     input.projectDefaultSelection ??
     (input.carrySourceDraftId === input.destinationDraftId ? null : input.carrySelection)
   );
+}
+
+/**
+ * The model New thread starts on: the project's default, else the composer's carried or sticky
+ * pick when it can run, else the first ready provider. Usage limits move only the defaults to
+ * the fallback model. `override` is what New thread writes over the draft's own pick.
+ */
+export function resolveNewThreadModelDefaults(input: {
+  readonly projectDefault: ModelSelection | null;
+  readonly composerPick: ModelSelection | null;
+  readonly providers: ReadonlyArray<ServerProvider>;
+  readonly settings: ServerSettings;
+  readonly projectId: ProjectId;
+  readonly now: number;
+}) {
+  const { projectDefault, composerPick, providers, settings, projectId } = input;
+  const firstReady = () =>
+    resolveProjectDefaultProviderModelSelection(providers, settings, projectId);
+  const resolved = resolveNewThreadModelSelection({
+    defaultSelection: projectDefault ?? (composerPick === null ? firstReady() : null),
+    fallbackSelection: settings.fallbackModelSelection ?? null,
+    providers,
+    settings,
+    projectId,
+    now: input.now,
+  });
+  const override = resolved.fallback ? resolved.selection : projectDefault;
+  const pickRuns =
+    composerPick !== null &&
+    providerInstanceEntriesFor(providers, settings, projectId).some(
+      (entry) => entry.instanceId === composerPick.instanceId && entry.enabled && entry.isAvailable,
+    );
+  return {
+    override,
+    selection: override ?? (pickRuns ? composerPick : null) ?? resolved.selection ?? firstReady(),
+  };
 }
 
 export function hasExplicitComposerModelSelection(

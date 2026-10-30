@@ -608,6 +608,8 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
   // The relative times read the clock; nowMinute re-renders them on the minute.
   const snoozedUntil = activeThreadShell?.snoozedUntil ?? null;
   const settledAt = activeThreadShell?.settledAt ?? null;
+  const settledNote = activeThreadShell?.settledNote ?? null;
+  const settledLabel = settledAt ? `Settled ${formatRelativeTimeLabel(settledAt)}` : "Settled";
   // Same rounding as the sidebar's snoozed shelf, so both read the same hour.
   const snoozeWake = snoozedUntil
     ? snoozeWakeLabel(snoozedUntil, { now: `${nowMinute}:00.000Z` })
@@ -626,7 +628,7 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
   ) : activeThreadSettled ? (
     <ThreadStatusLine
       icon={<CheckCircle2Icon />}
-      label={settledAt ? `Settled ${formatRelativeTimeLabel(settledAt)}` : "Settled"}
+      label={settledNote ? `${settledLabel}: ${settledNote}` : settledLabel}
       clockMinute={nowMinute}
       actionLabel={isUnsettling ? "Un-settling..." : "Un-settle"}
       actionDisabled={!canOperateThread || isUnsettling}

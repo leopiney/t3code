@@ -841,7 +841,9 @@ function ThreadDetailBody(
         lifecycleSnoozed && snoozedUntil !== null
           ? `Snoozed, wakes in ${snoozeWakeLabel(snoozedUntil, { now: lifecycleNow })}`
           : settled
-            ? "Settled"
+            ? props.selectedThread.settledNote
+              ? `Settled: ${props.selectedThread.settledNote}`
+              : "Settled"
             : "Woke from snooze";
       const actionLabel = lifecycleSnoozed ? "Wake now" : settled ? "Un-settle" : "Dismiss";
       return {

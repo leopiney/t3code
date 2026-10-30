@@ -39,6 +39,7 @@ import {
   RunId,
   type ScheduledTaskId,
   ThreadId,
+  type ThreadSettledNote,
   type TurnItemId,
 } from "@t3tools/contracts";
 import { delegatedTaskProgress } from "@t3tools/provider-core/server/subagentProjection";
@@ -453,11 +454,13 @@ export interface ThreadManagementServiceShape {
     readonly projectId: ProjectId;
     readonly threadId: ThreadId;
     readonly runId: RunId;
+    readonly note?: ThreadSettledNote;
   }) => Effect.Effect<void, ThreadManagementFailure>;
   readonly settleThread: (input: {
     readonly threadId: ThreadId;
     readonly commandId: CommandId;
     readonly byOwnAgent: boolean;
+    readonly note?: ThreadSettledNote;
   }) => Effect.Effect<
     { readonly sequence: number } | { readonly settlesWhenTurnEnds: true },
     Orchestrator.OrchestratorV2Error | ThreadManagementProviderInstanceDisabledError
@@ -1090,6 +1093,7 @@ const make = Effect.gen(function* () {
         commandId: CommandId.make(`server:settle-after-run:${input.runId}:${sequence}`),
         threadId: input.threadId,
         expectedLatestRunId: latest.id,
+        ...(input.note === undefined ? {} : { note: input.note }),
       }).pipe(
         Effect.as(true),
         // A notification can start between the projection read and the guarded dispatch.
@@ -1124,6 +1128,7 @@ const make = Effect.gen(function* () {
         projectId: shell.projectId,
         threadId: shell.id,
         runId: shell.activeRunId,
+        ...(input.note === undefined ? {} : { note: input.note }),
       }).pipe(Effect.ignoreCause({ log: true }), Effect.forkIn(layerScope));
       return { settlesWhenTurnEnds: true } as const;
     }
@@ -1131,6 +1136,7 @@ const make = Effect.gen(function* () {
       type: "thread.settle",
       commandId: input.commandId,
       threadId: input.threadId,
+      ...(input.note === undefined ? {} : { note: input.note }),
     });
     return { sequence: result.sequence };
   });

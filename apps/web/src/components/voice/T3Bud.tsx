@@ -66,6 +66,16 @@ const WIDGET_LAYOUT_STORAGE_KEY = "t3code:t3bud-widget:v1";
 // Clear of the composer and its send button on most layouts; the user can drag it anywhere.
 const DEFAULT_WIDGET_LAYOUT: WidgetLayout = { right: 20, bottom: 128, open: true };
 const loadBuddyHead = () => import("@t3tools/client-runtime/voice/buddy-head");
+const COMPOSER_SELECTOR = '[data-chat-composer-main-surface="true"]';
+
+/** The prompt box T3Bud watches when the pointer is away: the focused one, else the first shown. */
+function composerCenter(): { x: number; y: number } | null {
+  const focused = document.activeElement?.closest(COMPOSER_SELECTOR);
+  const composer = focused ?? document.querySelector(COMPOSER_SELECTOR);
+  const rect = composer?.getBoundingClientRect();
+  if (!rect || rect.width === 0 || rect.height === 0) return null;
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
 
 export function T3Bud() {
   const router = useRouter();
@@ -457,6 +467,7 @@ function BuddyAvatar({
           modelUrl: t3BudAssetUrl(animal, "glb"),
           levels: { output: () => session.outputLevel(), input: () => session.inputLevel() },
           onUnavailable: () => setFlat(true),
+          restTarget: composerCenter,
         });
         if (head === null) {
           setFlat(true);

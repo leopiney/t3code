@@ -28,7 +28,7 @@ export function makeProjectHasThreadsAtom(sources: {
   );
 }
 
-const projectHasThreadsAtom = makeProjectHasThreadsAtom({
+export const projectHasThreadsAtom = makeProjectHasThreadsAtom({
   threadRefsByProject: environmentThreadShells.environmentThreadRefsByProjectAtom,
   olderSettled: olderSettledThreads.olderSettledAtom,
 });

@@ -688,6 +688,14 @@
       }
     },
     {
+      "name": "@config-plugins/react-native-webrtc",
+      "sourceUrl": "https://github.com/expo/config-plugins",
+      "generatedNotice": {
+        "licenseId": "MIT",
+        "copyrights": ["Copyright (c) 650 Industries, Inc. (aka Expo)"]
+      }
+    },
+    {
       "license": "MIT",
       "name": "fb-dotslash",
       "generatedNotice": {

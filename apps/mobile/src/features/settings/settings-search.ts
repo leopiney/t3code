@@ -49,6 +49,7 @@ const SETTINGS_SEARCH_TERMS = {
     "microphone order",
     "bluetooth",
   ],
+  SettingsVoiceAgent: ["wolfbud", "elevenlabs", "voice agent", "api key", "call", "speak"],
   SettingsScheduledTasks: ["automations", "schedule", "cron", "recurring", "webhook"],
   SettingsProjectOverview: ["project", "overview", "checkouts", "delete project"],
   SettingsOrganization: [

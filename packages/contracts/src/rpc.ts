@@ -408,6 +408,7 @@ import {
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
+import { VoiceAgentError, VoiceCreateCallTokenResult, VoiceSyncAgentResult } from "./voice.ts";
 
 export const WS_METHODS = {
   projectsListEntries: "projects.listEntries",
@@ -606,6 +607,9 @@ export const WS_METHODS = {
   projectCloneCancel: "projectClone.cancel",
   projectCloneRetry: "projectClone.retry",
   subscribeProjectClones: "subscribeProjectClones",
+
+  voiceCreateCallToken: "voice.createCallToken",
+  voiceSyncAgent: "voice.syncAgent",
 
   subscribeVcsStatus: "subscribeVcsStatus",
   subscribeVcsBranch: "subscribeVcsBranch",
@@ -2044,6 +2048,18 @@ const WsSubscribeResourceTelemetryRpc = Rpc.make(WS_METHODS.subscribeResourceTel
   stream: true,
 });
 
+const WsVoiceCreateCallTokenRpc = Rpc.make(WS_METHODS.voiceCreateCallToken, {
+  payload: Schema.Struct({}),
+  success: VoiceCreateCallTokenResult,
+  error: Schema.Union([VoiceAgentError, ServerSettingsError, EnvironmentAuthorizationError]),
+});
+
+const WsVoiceSyncAgentRpc = Rpc.make(WS_METHODS.voiceSyncAgent, {
+  payload: Schema.Struct({}),
+  success: VoiceSyncAgentResult,
+  error: Schema.Union([VoiceAgentError, ServerSettingsError, EnvironmentAuthorizationError]),
+});
+
 export class RpcScopeAuthorization extends RpcMiddleware.Service<RpcScopeAuthorization>()(
   "t3/contracts/RpcScopeAuthorization",
   { error: EnvironmentAuthorizationError },
@@ -2244,6 +2260,8 @@ export const WsRpcGroup = RpcGroup.make(
   WsSubscribeServerLifecycleRpc,
   WsSubscribeAuthAccessRpc,
   WsSubscribeResourceTelemetryRpc,
+  WsVoiceCreateCallTokenRpc,
+  WsVoiceSyncAgentRpc,
   WsOrchestrationV2DispatchCommandRpc,
   WsOrchestrationV2GetWorkflowScriptRpc,
   WsOrchestrationV2GetNativeChildWorkRpc,

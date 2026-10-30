@@ -13,6 +13,7 @@ import {
   type ProviderInstanceId,
   type PullRequestMergeMethod,
   type SidebarProjectGroupingMode,
+  VoiceAgentSpeakMode,
 } from "@t3tools/contracts";
 import { ToolCallVisibility } from "@t3tools/contracts/settings";
 import type { AndroidNavigationStyle } from "../lib/androidNavigationStyle";
@@ -87,6 +88,7 @@ const ThreadProject = Schema.Struct({
   projectId: Schema.NonEmptyString,
 });
 const isThreadProject = Schema.is(ThreadProject);
+const isVoiceAgentSpeakMode = Schema.is(VoiceAgentSpeakMode);
 
 export interface Preferences {
   readonly navigationTabOrder?: readonly string[];
@@ -130,6 +132,8 @@ export interface Preferences {
   readonly threadListFilters?: ThreadListFilters;
   readonly pullRequestListFilters?: PullRequestListPreferences;
   readonly workspaceSelections?: WorkspaceSelections;
+  readonly wolfBudEnabled?: boolean;
+  readonly wolfBudSpeaks?: VoiceAgentSpeakMode;
 }
 
 export class MobilePreferencesLoadError extends Schema.TaggedError<MobilePreferencesLoadError>()(
@@ -211,6 +215,8 @@ function sanitizePreferences(parsed: Preferences): Preferences {
     threadListFilters?: ThreadListFilters;
     pullRequestListFilters?: PullRequestListPreferences;
     workspaceSelections?: WorkspaceSelections;
+    wolfBudEnabled?: boolean;
+    wolfBudSpeaks?: VoiceAgentSpeakMode;
   } = {};
 
   if (Array.isArray(parsed.hiddenNavigationTabs)) {
@@ -364,6 +370,12 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   }
   if (isWorkspaceSelections(parsed.workspaceSelections)) {
     preferences.workspaceSelections = parsed.workspaceSelections;
+  }
+  if (typeof parsed.wolfBudEnabled === "boolean") {
+    preferences.wolfBudEnabled = parsed.wolfBudEnabled;
+  }
+  if (isVoiceAgentSpeakMode(parsed.wolfBudSpeaks)) {
+    preferences.wolfBudSpeaks = parsed.wolfBudSpeaks;
   }
   return preferences;
 }

@@ -299,6 +299,7 @@ function T3BudBackgroundPicker({
       </RadioGroup>
       <ThemeColorPicker
         label="T3Bud background"
+        spectrum
         value={value}
         onChange={(next) => {
           if (isT3BudBackground(next)) onValueChange(next.toLowerCase());

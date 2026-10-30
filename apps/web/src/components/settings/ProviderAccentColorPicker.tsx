@@ -1,7 +1,7 @@
 import { PlusIcon, XIcon } from "lucide-react";
 import { useRef, useState, type PointerEvent } from "react";
 
-import { hexToHsv, hsvToHex, type HsvColor } from "../../lib/color";
+import { hexToHsv, hsvToHex, type HsvColor } from "@t3tools/shared/color";
 import { ColorHueSlider, ColorSaturationValuePlane } from "../ui/color-picker";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";

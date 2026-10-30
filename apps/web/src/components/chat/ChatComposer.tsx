@@ -303,7 +303,10 @@ export interface ChatComposerHandle {
     sourceAnchor: AssistantCitationSourceAnchor,
   ) => boolean;
   openModelPicker: () => void;
-  stepReasoningEffort: (direction: 1 | -1) => void;
+  /** False when this model has no effort level to step to, so the key keeps its other job. */
+  stepReasoningEffort: (direction: 1 | -1) => boolean;
+  /** Code blocks, citation comments, and legacy Plan mode keep Shift+Tab. */
+  ownsShiftTab: () => boolean;
   toggleModelPicker: () => void;
   openControl: (command: KeybindingCommand) => void;
   isModelPickerOpen: () => boolean;
@@ -2867,9 +2870,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           { ensureLeadingBoundary: true, citationCommentAnchor: sourceAnchor },
         ),
       openModelPicker: openModelPickerStable,
+      ownsShiftTab: () => planModeUiEnabled || composerEditorRef.current?.ownsShiftTab() === true,
       stepReasoningEffort: (direction) => {
         if (noProviderAvailable || pendingUserInputs.length > 0 || isEditingQueuedMessage) {
-          return;
+          return false;
         }
         const change = getComposerReasoningStep({
           provider: selectedProvider,
@@ -2883,7 +2887,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           planModeEnabled: settings.planModeEnabled,
           direction,
         });
-        if (!change) return;
+        if (!change) return false;
         useComposerDraftStore
           .getState()
           .setProviderModelOptions(composerDraftTarget, selectedProvider, change.modelOptions, {
@@ -2896,6 +2900,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             expandedCursorAfterReplace: change.cursor,
           });
         }
+        return true;
       },
       toggleModelPicker: () => {
         if (isComposerModelPickerOpen) {

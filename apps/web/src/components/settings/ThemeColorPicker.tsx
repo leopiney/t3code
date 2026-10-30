@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { isThemeColor, themeColorToHex, type ThemeColorRole } from "../../themePalette";
 import { cn } from "../../lib/utils";
-import { hexToHsv, hsvToHex, type HsvColor } from "../../lib/color";
+import { hexToHsv, hsvToHex, parseHexColor, type HsvColor } from "@t3tools/shared/color";
 import { ColorHueSlider, ColorSaturationValuePlane } from "../ui/color-picker";
 import { Input } from "../ui/input";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
@@ -27,6 +27,9 @@ export function getThemeRoleLabel(role: ThemeColorRole): string {
   if (label) return label;
   return role.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
 }
+
+const SPECTRUM_RING =
+  "conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)";
 
 function themePickerAlphaSuffix(value: string): string {
   const normalized = themeColorToHex(value) ?? "";
@@ -140,11 +143,11 @@ function ThemeColorPickerPanel({
 
   const handleHexChange = (nextValue: string) => {
     setHexDraft(nextValue);
-    if (!/^#[0-9a-f]{6}$/i.test(nextValue)) return;
-    const nextHsv = hexToHsv(nextValue);
-    setHsv(nextHsv);
-    setRgbDraft(themeRgbValue(nextValue));
-    onChange(nextValue.toLowerCase() + alphaSuffix);
+    const nextColor = parseHexColor(nextValue);
+    if (!nextColor) return;
+    setHsv(hexToHsv(nextColor));
+    setRgbDraft(themeRgbValue(nextColor));
+    onChange(nextColor + alphaSuffix);
   };
 
   const handleRgbChange = (nextValue: string) => {
@@ -243,6 +246,7 @@ export function ThemeColorPicker({
   onEditStart,
   onEditCancel,
   onInteract,
+  spectrum = false,
 }: {
   label: string;
   value: string;
@@ -250,6 +254,8 @@ export function ThemeColorPicker({
   onEditStart?: () => void;
   onEditCancel?: () => void;
   onInteract?: () => void;
+  /** Rings the swatch in a hue wheel, for when it sits beside preset swatches. */
+  spectrum?: boolean;
 }) {
   const [committer] = useState(createFrameCommitter);
   // Escape reverts the edit, so commits after it (the pending frame flushed on close, or a drag
@@ -282,8 +288,18 @@ export function ThemeColorPicker({
                   onPointerDown={onInteract}
                   type="button"
                 >
+                  {spectrum ? (
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: SPECTRUM_RING }}
+                    />
+                  ) : null}
                   <span
-                    className="absolute inset-0 rounded-full shadow-sm"
+                    className={cn(
+                      "absolute rounded-full shadow-sm",
+                      spectrum ? "inset-[3px]" : "inset-0",
+                    )}
                     style={{ backgroundColor: value }}
                   />
                 </button>

@@ -406,7 +406,7 @@ const config: ExpoConfig = {
         microphonePermission: MICROPHONE_PERMISSION,
       },
     ],
-    // WolfBud's voice calls (@elevenlabs/react-native) run over LiveKit WebRTC. The WebRTC
+    // T3Bud's voice calls (@elevenlabs/react-native) run over LiveKit WebRTC. The WebRTC
     // plugin adds Android's RECORD_AUDIO; pass the texts so its iOS defaults never win.
     "@livekit/react-native-expo-plugin",
     [

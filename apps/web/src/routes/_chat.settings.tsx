@@ -85,7 +85,7 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
       </SettingsScopeNotice>
     );
   }
-  // Voice also holds device settings, among them the only switch that hides the wolf.
+  // Voice also holds device settings, among them the only switch that hides T3Bud.
   if (
     SETTINGS_DEVICE_ONLY_PATHS.has(pathname) ||
     pathname === "/settings/projects" ||

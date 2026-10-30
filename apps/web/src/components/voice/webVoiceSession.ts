@@ -196,7 +196,8 @@ export function createWebVoiceSession(router: AnyRouter): {
       environmentThreadDetails.threadAtom,
     ),
     childRequests: (ref) => appAtomRegistry.get(environmentThreadShells.childThreadInputsAtom(ref)),
-    speakMode: getClientSettings().wolfBudSpeaks,
+    speakMode: getClientSettings().t3BudSpeaks,
+    animal: () => getClientSettings().t3BudAnimal,
     providerLabel: (thread) => {
       const provider = appAtomRegistry
         .get(environmentServerConfigsAtom)
@@ -207,7 +208,7 @@ export function createWebVoiceSession(router: AnyRouter): {
     environmentLabel: (environmentId) =>
       appAtomRegistry.get(environmentPresentations.presentationAtom(environmentId))?.entry.target
         .label ?? null,
-    reportError: (message, cause) => console.warn(`[wolfbud] ${message}`, cause),
+    reportError: (message, cause) => console.warn(`[t3bud] ${message}`, cause),
   });
   return {
     session,

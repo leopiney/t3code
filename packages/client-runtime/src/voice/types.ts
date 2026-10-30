@@ -7,6 +7,7 @@ import type {
   RuntimeMode,
   RuntimeRequestId,
   ScopedThreadRef,
+  T3BudAnimal,
   VoiceAgentSpeakMode,
 } from "@t3tools/contracts";
 
@@ -202,6 +203,8 @@ export interface VoiceSessionOptions {
   readonly subscribeThread: VoiceThreadSubscriber;
   readonly childRequests: VoiceChildRequests;
   readonly speakMode?: VoiceAgentSpeakMode;
+  /** The animal the user picked, read as each call starts so the agent plays it. */
+  readonly animal?: () => T3BudAnimal;
   readonly providerLabel?: (thread: EnvironmentThreadShell) => string;
   /** Tells apart projects with the same title on different environments. */
   readonly environmentLabel?: (

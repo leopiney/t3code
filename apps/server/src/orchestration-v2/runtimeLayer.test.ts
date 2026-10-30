@@ -2280,14 +2280,30 @@ it.layer(layerTest)("OrchestrationV2LayerLive lifecycle", (it) => {
         .pipe(Effect.flip);
       assert.instanceOf(overriddenAutoSettle, Orchestrator.OrchestratorDispatchError);
 
+      assert.isNull(autoSettledProjection.thread.settledNote ?? null);
       yield* orchestrator.dispatch({
         type: "thread.settle",
         commandId: CommandId.make("runtime-layer-lifecycle-settle"),
         threadId,
+        note: "wrapped up",
       });
       const settledProjection = yield* orchestrator.getThreadProjection(threadId);
       assert.equal(settledProjection.thread.settledOverride, "settled");
       assert.isNotNull(settledProjection.thread.settledAt);
+      assert.equal(settledProjection.thread.settledNote, "wrapped up");
+      const settledShell = (yield* orchestrator.getShellSnapshot()).threads.find(
+        (thread) => thread.id === threadId,
+      );
+      assert.equal(settledShell?.settledNote, "wrapped up");
+      // Settling again without a note keeps the note and the original settle time.
+      yield* orchestrator.dispatch({
+        type: "thread.settle",
+        commandId: CommandId.make("runtime-layer-lifecycle-resettle"),
+        threadId,
+      });
+      const resettledProjection = yield* orchestrator.getThreadProjection(threadId);
+      assert.equal(resettledProjection.thread.settledNote, "wrapped up");
+      assert.deepEqual(resettledProjection.thread.settledAt, settledProjection.thread.settledAt);
 
       yield* orchestrator.dispatch({
         type: "thread.unsettle",
@@ -2299,6 +2315,7 @@ it.layer(layerTest)("OrchestrationV2LayerLive lifecycle", (it) => {
       assert.equal(activeProjection.thread.settledOverride, "active");
       assert.isNull(activeProjection.thread.settledAt);
       assert.isNotNull(activeProjection.thread.unsettledAt);
+      assert.isNull(activeProjection.thread.settledNote);
       const activeShell = (yield* orchestrator.getShellSnapshot()).threads.find(
         (thread) => thread.id === threadId,
       );

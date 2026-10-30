@@ -717,12 +717,13 @@ function threadTitle(input: {
 }
 
 function threadSettlement(
-  thread: Pick<OrchestrationV2ThreadShell, "settledOverride" | "settledAt">,
-): Pick<OrchestratorMcpThreadListItem, "settled" | "settledAt"> {
+  thread: Pick<OrchestrationV2ThreadShell, "settledOverride" | "settledAt" | "settledNote">,
+): Pick<OrchestratorMcpThreadListItem, "settled" | "settledAt" | "settledNote"> {
   const settled = thread.settledOverride === "settled";
   return {
     settled,
     settledAt: settled && thread.settledAt !== null ? DateTime.formatIso(thread.settledAt) : null,
+    ...(settled && thread.settledNote != null ? { settledNote: thread.settledNote } : {}),
   };
 }
 

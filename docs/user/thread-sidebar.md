@@ -165,6 +165,10 @@ sending an answer or restarting the agent. Settling also closes the thread's
 terminals that wait at an idle prompt, and keeps their output. A terminal that
 runs a command, such as a dev server, stays open.
 
+Agents can settle a thread too, in any project, when you ask them to wrap it up. An agent
+can leave a short closing note, such as "done" or "wrapped up". The note appears on the
+thread's settled line and when you hover the thread in the sidebar. Un-settling clears it.
+
 To reclaim disk space from settled work, turn on **Run in the thread's worktree when the
 thread settles** for one of the project's actions, or set `"runOnSettle": true` on a
 `t3.json` script, for example `cargo clean`. It runs each time a thread in its own

@@ -59,3 +59,9 @@ export function hsvToHex(hue: number, saturation: number, value: number) {
     )
     .join("")}`;
 }
+
+/** A pasted or typed `#rrggbb`, with or without `#`, as lowercase `#rrggbb`; null otherwise. */
+export function parseHexColor(input: string): string | null {
+  const match = /^#?([0-9a-f]{6})$/i.exec(input.trim());
+  return match ? `#${match[1]!.toLowerCase()}` : null;
+}

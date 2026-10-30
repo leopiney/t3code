@@ -7,7 +7,7 @@ import {
   type RefObject,
 } from "react";
 
-import type { HsvColor } from "../../lib/color";
+import type { HsvColor } from "@t3tools/shared/color";
 import { cn } from "../../lib/utils";
 
 function clamp(value: number) {

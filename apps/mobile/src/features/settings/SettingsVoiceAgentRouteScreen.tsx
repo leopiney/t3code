@@ -33,6 +33,7 @@ import { useEnvironmentsWithScope } from "../../state/session";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { voiceEnvironment } from "../../state/voice";
 import { T3BUD_ANIMAL_IMAGES, T3BUD_ANIMAL_LABELS } from "../voice-agent/t3BudAnimals";
+import { ColorPickerSheet, SpectrumSwatch } from "./components/ColorPickerSheet";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { SettingsSection } from "./components/SettingsSection";
 import { SettingsSwitchRow } from "./components/SettingsSwitchRow";
@@ -183,19 +184,22 @@ function T3BudAnimalPicker(props: {
   );
 }
 
-/** The preset colors as swatches; the chosen one is ringed. */
+/** The preset colors as swatches, then one that opens a picker for any color; the chosen one is ringed. */
 function T3BudBackgroundPicker(props: {
   readonly value: T3BudBackground;
   readonly disabled: boolean;
   readonly onChange: (color: T3BudBackground) => void;
 }) {
+  const [picking, setPicking] = useState(false);
+  const value = props.value.toLowerCase();
+  const custom = !T3BUD_BACKGROUND_PRESETS.some((preset) => preset.color === value);
   return (
     <View
       accessibilityRole="radiogroup"
       className="flex-row justify-between bg-grouped-card px-4 py-3"
     >
       {T3BUD_BACKGROUND_PRESETS.map((preset) => {
-        const selected = props.value.toLowerCase() === preset.color;
+        const selected = value === preset.color;
         return (
           <Pressable
             key={preset.color}
@@ -217,6 +221,29 @@ function T3BudBackgroundPicker(props: {
           </Pressable>
         );
       })}
+      <Pressable
+        accessibilityRole="radio"
+        accessibilityLabel="Custom color"
+        accessibilityHint="Opens a color picker"
+        accessibilityState={{ checked: custom, disabled: props.disabled }}
+        disabled={props.disabled}
+        hitSlop={4}
+        onPress={() => setPicking(true)}
+        className={cn(
+          "rounded-full border-2 p-0.5",
+          custom ? "border-primary" : "border-transparent",
+        )}
+      >
+        <SpectrumSwatch color={value} size={32} />
+      </Pressable>
+      {picking ? (
+        <ColorPickerSheet
+          title="T3Bud background"
+          value={value}
+          onClose={() => setPicking(false)}
+          onDone={props.onChange}
+        />
+      ) : null}
     </View>
   );
 }

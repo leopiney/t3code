@@ -61,7 +61,13 @@ import {
   SpeechModelUnloadTimeout,
   SpeechPostProcessingPromptSettings,
 } from "./speech.ts";
-import { DEFAULT_T3BUD_SIZE, T3BudAnimal, T3BudSize, VoiceAgentSpeakMode } from "./voice.ts";
+  DEFAULT_T3BUD_BACKGROUND,
+  DEFAULT_T3BUD_SIZE,
+  T3BudAnimal,
+  T3BudBackground,
+  T3BudSize,
+  VoiceAgentSpeakMode,
+} from "./voice.ts";
 
 export const TimestampFormat = Schema.Literals(["locale", "12-hour", "24-hour"]);
 export type TimestampFormat = typeof TimestampFormat.Type;
@@ -577,6 +583,9 @@ export const ClientSettingsSchema = Schema.Struct({
   t3BudSpeaks: VoiceAgentSpeakMode.pipe(Schema.withDecodingDefault(Effect.succeed("all" as const))),
   t3BudAnimal: T3BudAnimal.pipe(Schema.withDecodingDefault(Effect.succeed("wolf" as const))),
   t3BudSize: T3BudSize.pipe(Schema.withDecodingDefault(Effect.succeed(DEFAULT_T3BUD_SIZE))),
+  t3BudBackground: T3BudBackground.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_T3BUD_BACKGROUND)),
+  ),
 });
 export type ClientSettings = typeof ClientSettingsSchema.Type;
 
@@ -1986,5 +1995,6 @@ export const ClientSettingsPatch = Schema.Struct({
   t3BudSpeaks: Schema.optionalKey(VoiceAgentSpeakMode),
   t3BudAnimal: Schema.optionalKey(T3BudAnimal),
   t3BudSize: Schema.optionalKey(T3BudSize),
+  t3BudBackground: Schema.optionalKey(T3BudBackground),
 });
 export type ClientSettingsPatch = typeof ClientSettingsPatch.Type;

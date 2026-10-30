@@ -40,13 +40,13 @@ import { createWebVoiceSession } from "./webVoiceSession";
 import {
   attachT3BudSession,
   selectT3BudAnimal,
+  selectT3BudSize,
   selectT3BudSpeaks,
   t3BudAssetUrl,
 } from "./t3BudCall";
 
-/** The head's drawing size in CSS px; its button adds the ring around it. */
-const BUDDY_SIZE = 56;
-const BUDDY_BUTTON_SIZE = 64;
+/** The ring and the gap between it and the head, in CSS px per side. */
+const BUDDY_INSET = 4;
 const DRAG_SLOP = 4;
 const FEED_SHOWN = 4;
 /** The card's `w-72` and `24rem` cap, its gap from T3Bud, and the margin it keeps from the window's edge. */
@@ -148,8 +148,8 @@ const readViewportWidth = () => window.innerWidth;
 const readViewportHeight = () => window.innerHeight;
 
 /** Where T3Bud is drawn: a spot saved in a larger window still keeps it on screen. */
-function clampOffset(offset: number, viewport: number): number {
-  return Math.max(0, Math.min(offset, viewport - BUDDY_BUTTON_SIZE));
+function clampOffset(offset: number, viewport: number, size: number): number {
+  return Math.max(0, Math.min(offset, viewport - size));
 }
 
 const CALL_BLOCKED_REASON: Record<Exclude<VoiceCallReadiness, "ready">, string> = {
@@ -163,6 +163,7 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const callShortcut = shortcutLabelForCommand(keybindings, "voice.toggleCall");
   const animal = useClientSettings(selectT3BudAnimal);
+  const size = useClientSettings(selectT3BudSize);
   // Mounted here so the permission reads stay warm for the palette, the shortcut and the call.
   const readiness = useAtomValue(voiceCallReadinessAtom);
   const viewportWidth = useSyncExternalStore(subscribeResize, readViewportWidth);
@@ -184,8 +185,8 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
   const draggedRef = useRef(false);
   const headRef = useRef<BuddyHead | null>(null);
   const stored = dragPosition ?? layout;
-  const right = clampOffset(stored.right, viewportWidth);
-  const bottom = clampOffset(stored.bottom, viewportHeight);
+  const right = clampOffset(stored.right, viewportWidth, size);
+  const bottom = clampOffset(stored.bottom, viewportHeight, size);
   const onCall = state.status === "connecting" || state.status === "live";
   const callBlocked = !onCall && readiness !== "ready";
   const via = useEnvironmentPresentation(onCall ? state.environmentId : null).presentation?.entry
@@ -193,15 +194,12 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
   const feed = state.feed.slice(-FEED_SHOWN);
 
   // The card opens toward the roomier half and never past an edge, wherever T3Bud sits.
-  const buddyTop = viewportHeight - bottom - BUDDY_BUTTON_SIZE;
-  const buddyLeft = viewportWidth - right - BUDDY_BUTTON_SIZE;
-  const cardBelow = buddyTop + BUDDY_BUTTON_SIZE / 2 < viewportHeight / 2;
-  const cardLeft = Math.max(
-    0,
-    Math.min(buddyLeft + BUDDY_BUTTON_SIZE - CARD_WIDTH, viewportWidth - CARD_WIDTH),
-  );
+  const buddyTop = viewportHeight - bottom - size;
+  const buddyLeft = viewportWidth - right - size;
+  const cardBelow = buddyTop + size / 2 < viewportHeight / 2;
+  const cardLeft = Math.max(0, Math.min(buddyLeft + size - CARD_WIDTH, viewportWidth - CARD_WIDTH));
   const cardRoom = cardBelow
-    ? viewportHeight - buddyTop - BUDDY_BUTTON_SIZE - CARD_GAP - CARD_EDGE
+    ? viewportHeight - buddyTop - size - CARD_GAP - CARD_EDGE
     : buddyTop - CARD_GAP - CARD_EDGE;
 
   const dragTo = (event: ReactPointerEvent<HTMLButtonElement>) => {
@@ -212,23 +210,24 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
     if (!start.moved && Math.hypot(dx, dy) < DRAG_SLOP) return null;
     start.moved = true;
     return {
-      right: Math.round(clampOffset(start.right - dx, window.innerWidth)),
-      bottom: Math.round(clampOffset(start.bottom - dy, window.innerHeight)),
+      right: Math.round(clampOffset(start.right - dx, window.innerWidth, size)),
+      bottom: Math.round(clampOffset(start.bottom - dy, window.innerHeight, size)),
     };
   };
 
   return (
     // z-50 and mounted after the app shell: above the terminal drawer and panels, below portaled dialogs and menus.
-    <div className="pointer-events-none fixed z-50 size-16" style={{ right, bottom }}>
+    <div
+      className="pointer-events-none fixed z-50"
+      style={{ right, bottom, width: size, height: size }}
+    >
       {layout.open ? (
         <section
           aria-label="T3Bud"
           className="pointer-events-auto absolute flex w-72 flex-col gap-2 overflow-y-auto rounded-xl border bg-popover p-3 text-popover-foreground shadow-lg [-webkit-app-region:no-drag]"
           style={{
             left: cardLeft - buddyLeft,
-            ...(cardBelow
-              ? { top: BUDDY_BUTTON_SIZE + CARD_GAP }
-              : { bottom: BUDDY_BUTTON_SIZE + CARD_GAP }),
+            ...(cardBelow ? { top: size + CARD_GAP } : { bottom: size + CARD_GAP }),
             maxHeight: Math.max(0, Math.min(CARD_MAX_HEIGHT, cardRoom)),
           }}
         >
@@ -347,7 +346,7 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
               type="button"
               aria-label={layout.open ? "Pet T3Bud" : "Show T3Bud's card"}
               className={cn(
-                "pointer-events-auto relative flex size-16 touch-none items-center justify-center rounded-full border-2 bg-t3bud shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [-webkit-app-region:no-drag]",
+                "pointer-events-auto relative flex size-full touch-none items-center justify-center rounded-full border-2 bg-t3bud shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [-webkit-app-region:no-drag]",
                 RING_CLASS[state.status],
               )}
               onPointerDown={(event) => {
@@ -394,6 +393,7 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
           <BuddyAvatar
             key={animal}
             animal={animal}
+            size={size - 2 * BUDDY_INSET}
             session={session}
             mood={buddyMood(state)}
             headRef={headRef}
@@ -414,23 +414,32 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
 
 function BuddyAvatar({
   animal,
+  size,
   session,
   mood,
   headRef,
 }: {
   animal: T3BudAnimal;
+  size: number;
   session: VoiceSession;
   mood: BuddyMood;
   headRef: { current: BuddyHead | null };
 }) {
   const [flat, setFlat] = useState(false);
   const moodRef = useRef(mood);
+  const sizeRef = useRef(size);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- pushes the call's mood into the imperative three.js head
   useEffect(() => {
     moodRef.current = mood;
     headRef.current?.setMood(mood);
   }, [mood, headRef]);
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- resizes the imperative three.js head's drawing buffer
+  useEffect(() => {
+    sizeRef.current = size;
+    headRef.current?.resize(size, window.devicePixelRatio || 1);
+  }, [size, headRef]);
 
   // The head lives as long as its canvas; three.js loads with the first one.
   const mountHead = (canvas: HTMLCanvasElement | null) => {
@@ -450,7 +459,7 @@ function BuddyAvatar({
           setFlat(true);
           return;
         }
-        head.resize(BUDDY_SIZE, window.devicePixelRatio || 1);
+        head.resize(sizeRef.current, window.devicePixelRatio || 1);
         head.setMood(moodRef.current);
         headRef.current = head;
       },
@@ -468,11 +477,12 @@ function BuddyAvatar({
       src={t3BudAssetUrl(animal, "png")}
       alt=""
       draggable={false}
-      className="size-14 rounded-full"
-      width={BUDDY_SIZE}
-      height={BUDDY_SIZE}
+      className="rounded-full"
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
     />
   ) : (
-    <canvas ref={mountHead} aria-hidden className="size-14" />
+    <canvas ref={mountHead} aria-hidden style={{ width: size, height: size }} />
   );
 }

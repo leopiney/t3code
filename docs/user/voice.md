@@ -20,6 +20,7 @@ environment.
 4. Turn on **Show T3Bud**. This is a per-device setting.
 5. Pick T3Bud's **Animal**: a wolf, frog, capybara, or axolotl. The agent plays the one you pick on
    your next call. This is also per device.
+6. Drag **Size** to make T3Bud's circle bigger or smaller. This is also per device.
 
 Calls go through a connected environment that has a key and lets this device start calls, your
 primary environment first. During a call, T3Bud shows which one it goes through.
@@ -29,6 +30,9 @@ primary environment first. During a call, T3Bud shows which one it goes through.
 Call from T3Bud's card, the command palette (**Call T3Bud**), or `mod+alt+v`. The same shortcut
 or command hangs up. Drag T3Bud to move it out of your way. On iOS and Android, T3Bud is a call
 button.
+
+Show or hide T3Bud with `mod+alt+shift+b` or **Show T3Bud** / **Hide T3Bud** in the command
+palette. Hiding it ends a call.
 
 **Speak updates aloud** in **Settings** > **Voice** chooses what T3Bud says without being asked:
 finished work and what needs you, only what needs you, or nothing. Updates it does not speak still

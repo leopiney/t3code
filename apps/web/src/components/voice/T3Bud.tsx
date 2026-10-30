@@ -37,11 +37,13 @@ import { Button, InlineButton } from "../ui/button";
 import { Kbd } from "../ui/kbd";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { createWebVoiceSession } from "./webVoiceSession";
-import { attachT3BudSession, selectT3BudAnimal, selectT3BudSpeaks } from "./t3BudCall";
+import {
+  attachT3BudSession,
+  selectT3BudAnimal,
+  selectT3BudSpeaks,
+  t3BudAssetUrl,
+} from "./t3BudCall";
 
-const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-const modelUrl = (animal: T3BudAnimal) => `${ASSET_BASE}/t3bud/${animal}.glb`;
-const iconUrl = (animal: T3BudAnimal) => `${ASSET_BASE}/t3bud/${animal}.png`;
 /** The head's drawing size in CSS px; its button adds the ring around it. */
 const BUDDY_SIZE = 56;
 const BUDDY_BUTTON_SIZE = 64;
@@ -439,7 +441,7 @@ function BuddyAvatar({
         if (unmounted) return;
         head = createBuddyHead({
           canvas,
-          modelUrl: modelUrl(animal),
+          modelUrl: t3BudAssetUrl(animal, "glb"),
           levels: { output: () => session.outputLevel(), input: () => session.inputLevel() },
           onUnavailable: () => setFlat(true),
         });
@@ -462,7 +464,7 @@ function BuddyAvatar({
 
   return flat ? (
     <img
-      src={iconUrl(animal)}
+      src={t3BudAssetUrl(animal, "png")}
       alt=""
       draggable={false}
       className="size-14 rounded-full"

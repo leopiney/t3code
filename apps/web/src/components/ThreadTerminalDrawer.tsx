@@ -58,7 +58,11 @@ import {
 } from "~/terminal/ghostty/surface";
 import { type GhosttyColor, type GhosttyTheme } from "~/terminal/ghostty/core";
 import { useOpenInPreferredEditor } from "../editorPreferences";
+import { useRemoteOpenResolution } from "../remoteOpen";
+import { shellEnvironment } from "../state/shell";
+import { htmlDocumentPath } from "@t3tools/shared/filePreview";
 import { resolvePathLinkTarget } from "@t3tools/shared/fileLinks";
+import { shouldOpenMarkdownFileInSystemBrowser } from "../markdown-links";
 import { isTerminalUrl } from "../terminal-links";
 import {
   isDiffToggleShortcut,
@@ -518,11 +522,28 @@ function TerminalSessionViewport({
       isTerminalUrl(text) || readEnvironmentScope(environmentId, AuthOrchestrationOperateScope),
   );
   const serverConfig = useAtomValue(serverEnvironment.configValueAtom(environmentId));
+  const remoteOpen = useRemoteOpenResolution(environmentId);
+  const openInEditor = useAtomCommand(shellEnvironment.openInEditor, { reportFailure: false });
   const openInPreferredEditor = useOpenInPreferredEditor(
     environmentId,
     serverConfig?.availableEditors ?? [],
   );
-  const openTerminalPath = useEffectEvent((target: string) => openInPreferredEditor(target));
+  const openTerminalPath = useEffectEvent((target: string) => {
+    const filesystemPath = htmlDocumentPath(target);
+    if (
+      filesystemPath !== null &&
+      shouldOpenMarkdownFileInSystemBrowser({ path: target }) &&
+      remoteOpen.isResolved &&
+      remoteOpen.state.mode === "local-exec" &&
+      serverConfig?.availableEditors.includes("file-manager") === true
+    ) {
+      return openInEditor({
+        environmentId,
+        input: { cwd: filesystemPath, editor: "file-manager" },
+      });
+    }
+    return openInPreferredEditor(target);
+  });
   const openPreview = useAtomCommand(previewEnvironment.open, {
     reportFailure: false,
   });

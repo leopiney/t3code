@@ -2,6 +2,7 @@ import type { EnvironmentId } from "@t3tools/contracts";
 import { splitFilePathPosition } from "@t3tools/shared/fileLinks";
 
 import {
+  shouldOpenMarkdownFileInSystemBrowser,
   shouldOpenMarkdownFileLinkInBrowserByDefault,
   type MarkdownFileLinkMeta,
 } from "../../markdown-links";
@@ -19,13 +20,29 @@ export function hasMarkdownFilePrimaryAction(input: {
   canOpenInEditor: boolean;
   canOpenInBrowser: boolean;
   canOpenInPanel: boolean;
+  canOpenInSystemBrowser?: boolean;
   canOpenMedia?: boolean;
 }): boolean {
   return (
     input.canOpenInEditor ||
     input.canOpenInBrowser ||
     input.canOpenInPanel ||
+    input.canOpenInSystemBrowser === true ||
     input.canOpenMedia === true
+  );
+}
+
+export function shouldUseMarkdownFileSystemBrowserPrimaryAction(input: {
+  iconPath: string;
+  line?: number;
+  canOpenInSystemBrowser: boolean;
+}): boolean {
+  return (
+    input.canOpenInSystemBrowser &&
+    shouldOpenMarkdownFileInSystemBrowser({
+      path: input.iconPath,
+      ...(input.line !== undefined ? { line: input.line } : {}),
+    })
   );
 }
 

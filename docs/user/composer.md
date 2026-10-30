@@ -347,14 +347,18 @@ can break the preview, so save a copy if you need to keep it.
 ## Files outside the workspace
 
 Follow an agent's file link to read a report or other file outside the workspace.
-These files open read-only. An HTML file outside the workspace cannot load scripts,
-styles, or images from neighboring files.
+These files open read-only in the file viewer. An HTML preview there cannot load
+scripts, styles, or images from neighboring files. Opening that HTML file in the
+system browser loads those files from its folder.
 
 ## HTML and PDF files in the file viewer
 
-On web and desktop, HTML and PDF files open as rendered pages. Switch an HTML
-file to source view to read its markup; a link to a specific line opens source
-automatically. HTML previews cannot access your T3 Code session.
+On web and desktop, the file viewer shows HTML and PDF files as rendered pages.
+A plain click on an HTML file in chat, the terminal, or a file menu opens it in
+the system browser. Cmd-click or Ctrl-click opens it in the preferred editor, and
+**Open in editor** does the same. A link to a specific line opens the source in
+the file viewer. Switch an HTML file to source view to read its markup. HTML
+previews cannot access your T3 Code session.
 
 The file viewer recognizes images, HTML, and PDF files by their filename extension,
 including filenames or folders containing `#` or `?`.

@@ -9,6 +9,7 @@ export {
   mediaKindFromPath,
   mediaMimeTypeFromExtension,
 } from "./mediaPreview.ts";
+import { splitFilePathPosition } from "./fileLinks.ts";
 import { videoMimeType } from "./video.ts";
 
 export type FilePreviewKind =
@@ -223,6 +224,27 @@ function hasPreviewExtension(path: string, extensions: ReadonlyArray<string>): b
 
 export function isWorkspaceBrowserPreviewPath(path: string): boolean {
   return hasPreviewExtension(path, WORKSPACE_BROWSER_PREVIEW_EXTENSIONS);
+}
+
+const HTML_DOCUMENT_EXTENSION = /\.html?$/i;
+
+/**
+ * Filesystem path for an `.html` or `.htm` document.
+ * Line suffixes (`file.html:12`) and `?` / `#` fragments are removed.
+ * `.xhtml` and `.pdf` are not HTML documents.
+ */
+export function htmlDocumentPath(target: string): string | null {
+  const hashIndex = target.indexOf("#");
+  const hash = hashIndex === -1 ? "" : target.slice(hashIndex);
+  const withoutHash = hashIndex === -1 ? target : target.slice(0, hashIndex);
+  const literal = withoutHash.split("?", 1)[0] ?? "";
+  if (literal.length === 0) return null;
+  const { path } = splitFilePathPosition(literal, hash);
+  return HTML_DOCUMENT_EXTENSION.test(path) ? path : null;
+}
+
+export function isHtmlDocumentPath(target: string): boolean {
+  return htmlDocumentPath(target) !== null;
 }
 
 /** File viewers receive literal filesystem paths, not Markdown URLs. */

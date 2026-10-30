@@ -370,6 +370,203 @@ for (const wsl of [false, true]) {
   );
 }
 
+const stubExecutables = (names: ReadonlyArray<string>) =>
+  Effect.gen(function* () {
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+    const binDir = yield* fileSystem.makeTempDirectoryScoped({ prefix: "t3-html-browser-" });
+    for (const name of names) {
+      const filePath = path.join(binDir, name);
+      yield* fileSystem.writeFileString(filePath, "#!/bin/sh\n");
+      yield* fileSystem.chmod(filePath, 0o755);
+    }
+    return binDir;
+  });
+
+const decodeEncodedPowerShell = (command: ChildProcess.StandardCommand) =>
+  Buffer.from(command.args.at(-1) ?? "", "base64").toString("utf16le");
+
+it.effect.skipIf(windowsHost)("opens an HTML file in the default macOS browser", () =>
+  Effect.gen(function* () {
+    const binDir = yield* stubExecutables(["open", "osascript"]);
+    const spawned: ChildProcess.StandardCommand[] = [];
+    const launch = (cwd: string, reveal?: boolean) =>
+      Effect.gen(function* () {
+        const launcher = yield* ExternalLauncher.ExternalLauncher;
+        yield* launcher.launchEditor({
+          editor: "file-manager",
+          cwd,
+          ...(reveal ? { reveal: true } : {}),
+        });
+      }).pipe(
+        Effect.provide(
+          layerTest({
+            platform: "darwin",
+            env: { PATH: binDir },
+            onSpawn: (command) => spawned.push(command),
+          }),
+        ),
+      );
+
+    yield* launch("/tmp/my report.html");
+    yield* launch("/tmp/page.html:40");
+    yield* launch("/tmp/page.html", true);
+    yield* launch("/tmp/notes.ts");
+
+    const [html, lined, revealed, other] = spawned;
+    assert.ok(html && lined && revealed && other);
+    assert.equal(html.command, "osascript");
+    assert.equal(html.args[0], "-e");
+    assert.equal(html.args[2], "/tmp/my report.html");
+    assert.ok(String(html.args[1]).includes("URLForApplicationToOpenURL"));
+    assert.equal(String(html.args[1]).includes("/tmp/my report.html"), false);
+    assert.equal(lined.command, "osascript");
+    assert.equal(lined.args[2], "/tmp/page.html");
+    assert.equal(revealed.command, "open");
+    assert.deepEqual(revealed.args, ["-R", "/tmp/page.html"]);
+    assert.equal(other.command, "open");
+    assert.deepEqual(other.args, ["/tmp/notes.ts"]);
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
+it.effect.skipIf(windowsHost)("opens an HTML file with the file association over SSH", () =>
+  Effect.gen(function* () {
+    const binDir = yield* stubExecutables(["open", "osascript"]);
+    let spawned: ChildProcess.StandardCommand | undefined;
+    yield* Effect.gen(function* () {
+      const launcher = yield* ExternalLauncher.ExternalLauncher;
+      yield* launcher.launchEditor({ editor: "file-manager", cwd: "/tmp/page.html" });
+    }).pipe(
+      Effect.provide(
+        layerTest({
+          platform: "darwin",
+          env: { PATH: binDir, SSH_CONNECTION: "203.0.113.4 1 198.51.100.8 2" },
+          onSpawn: (command) => {
+            spawned = command;
+          },
+        }),
+      ),
+    );
+    assert.ok(spawned);
+    assert.equal(spawned.command, "open");
+    assert.deepEqual(spawned.args, ["/tmp/page.html"]);
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
+it.effect.skipIf(windowsHost)("opens an HTML file with the Linux https handler", () =>
+  Effect.gen(function* () {
+    const binDir = yield* stubExecutables(["xdg-open", "xdg-mime", "gtk-launch"]);
+    const target = "/workspace/my report.html";
+    const launch = (desktopId: string) =>
+      Effect.gen(function* () {
+        const spawned: ChildProcess.StandardCommand[] = [];
+        yield* Effect.gen(function* () {
+          const launcher = yield* ExternalLauncher.ExternalLauncher;
+          yield* launcher.launchEditor({ editor: "file-manager", cwd: target });
+        }).pipe(
+          Effect.provide(
+            layerTest({
+              platform: "linux",
+              env: { PATH: binDir, DISPLAY: ":0" },
+              onSpawn: (command) => spawned.push(command),
+              spawnResult: (command) =>
+                command.command === "xdg-mime" ? { stdout: `${desktopId}\n` } : undefined,
+            }),
+          ),
+        );
+        return spawned;
+      });
+
+    const opened = yield* launch("google-chrome.desktop");
+    const browser = opened.find((command) => command.command === "gtk-launch");
+    assert.ok(browser);
+    assert.deepEqual(browser.args, ["google-chrome.desktop", target]);
+    assert.ok(
+      opened.some(
+        (command) =>
+          command.command === "xdg-mime" && command.args.includes("x-scheme-handler/https"),
+      ),
+    );
+
+    const rejected = yield* launch("../not a browser.desktop");
+    assert.equal(
+      rejected.some((command) => command.command === "gtk-launch"),
+      false,
+    );
+    assert.ok(
+      rejected.some((command) => command.command === "xdg-open" && command.args[0] === target),
+    );
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
+it.effect.skipIf(windowsHost)("opens a WSL HTML file in the Windows browser", () =>
+  Effect.gen(function* () {
+    const binDir = yield* stubExecutables(["explorer.exe", "powershell.exe"]);
+    let spawned: ChildProcess.StandardCommand | undefined;
+    yield* Effect.gen(function* () {
+      const launcher = yield* ExternalLauncher.ExternalLauncher;
+      yield* launcher.launchEditor({
+        editor: "file-manager",
+        cwd: "/home/t3/o'reilly/report.html",
+      });
+    }).pipe(
+      Effect.provide(
+        layerTest({
+          platform: "linux",
+          env: {
+            PATH: binDir,
+            WSL_DISTRO_NAME: "Ubuntu-24.04",
+            WSL_INTEROP: "/run/WSL/1_interop",
+          },
+          onSpawn: (command) => {
+            spawned = command;
+          },
+        }),
+      ),
+    );
+    assert.ok(spawned);
+    assert.equal(spawned.command, "powershell.exe");
+    const decoded = decodeEncodedPowerShell(spawned);
+    assert.ok(decoded.includes("UrlAssociations\\https\\UserChoice"));
+    assert.ok(decoded.includes("Start-Process"));
+    assert.ok(
+      decoded.includes("'\\\\wsl.localhost\\Ubuntu-24.04\\home\\t3\\o''reilly\\report.html'"),
+    );
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
+it.effect("opens an HTML file with the Windows https handler", () =>
+  Effect.gen(function* () {
+    const binDir = yield* stubExecutables(["explorer.exe", "powershell.exe"]);
+    let spawned: ChildProcess.StandardCommand | undefined;
+    yield* Effect.gen(function* () {
+      const launcher = yield* ExternalLauncher.ExternalLauncher;
+      yield* launcher.launchEditor({
+        editor: "file-manager",
+        cwd: "C:\\work\\o'reilly\\report.html:12",
+      });
+    }).pipe(
+      Effect.provide(
+        layerTest({
+          platform: "win32",
+          env: { PATH: binDir, PATHEXT: ".COM;.EXE;.BAT;.CMD" },
+          onSpawn: (command) => {
+            spawned = command;
+          },
+        }),
+      ),
+    );
+    assert.ok(spawned);
+    assert.ok(spawned.command.toLowerCase().endsWith("powershell.exe"));
+    assert.equal(spawned.options.detached, false);
+    const decoded = decodeEncodedPowerShell(spawned);
+    assert.ok(decoded.includes("UrlAssociations\\https\\UserChoice"));
+    assert.ok(decoded.includes("Start-Process"));
+    assert.ok(decoded.includes("'C:\\work\\o''reilly\\report.html'"));
+    assert.equal(decoded.includes("report.html:12"), false);
+  }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
+);
+
 for (const cwd of ["/workspace with spaces/", "/workspace with spaces/file.ts:12:4"]) {
   it.effect.skipIf(windowsHost)(
     `opens ${cwd} with the macOS Zed bundle when another zed is on PATH`,

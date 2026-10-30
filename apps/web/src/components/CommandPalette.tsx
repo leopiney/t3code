@@ -70,6 +70,7 @@ import {
   MonitorIcon,
   PhoneIcon,
   PhoneOffIcon,
+  PawPrintIcon,
   SquarePenIcon,
   TextSearchIcon,
   UserPlusIcon,
@@ -105,6 +106,7 @@ import { useClientSettings } from "../hooks/useSettings";
 import {
   selectT3BudEnabled,
   toggleT3BudCall,
+  toggleT3BudShown,
   useT3BudCallActive,
   useT3BudCallReady,
 } from "./voice/t3BudCall";
@@ -1533,6 +1535,18 @@ function OpenCommandPaletteDialog(props: {
       },
     });
   }
+
+  actionItems.push({
+    kind: "action",
+    value: "action:t3bud-toggle",
+    searchTerms: ["t3bud", "voice", "buddy", "show", "hide", "toggle", "animal"],
+    title: t3BudEnabled ? "Hide T3Bud" : "Show T3Bud",
+    icon: <PawPrintIcon className={ITEM_ICON_CLASS} />,
+    shortcutCommand: "voice.toggleBuddy",
+    run: async () => {
+      toggleT3BudShown();
+    },
+  });
 
   for (const direction of [1, -1] as const) {
     const title = direction === 1 ? "Focus Next Workspace Area" : "Focus Previous Workspace Area";

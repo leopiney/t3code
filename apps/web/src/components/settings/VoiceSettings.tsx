@@ -4,9 +4,15 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { T3BudAnimal, VoiceAgentSpeakMode } from "@t3tools/contracts";
+import {
+  DEFAULT_T3BUD_SIZE,
+  MAX_T3BUD_SIZE,
+  MIN_T3BUD_SIZE,
+  T3BudAnimal,
+  VoiceAgentSpeakMode,
+} from "@t3tools/contracts";
 import { ExternalLinkIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 import {
   updateClientSettings,
@@ -24,13 +30,19 @@ import { Switch } from "../ui/switch";
 import {
   selectT3BudAnimal,
   selectT3BudEnabled,
+  selectT3BudSize,
   selectT3BudSpeaks,
   t3BudAssetUrl,
 } from "../voice/t3BudCall";
 import { SecretInput } from "./SecretInput";
 import { useSettingsScope } from "./SettingsScopeContext";
 import { searchableSetting } from "./settingsSearch";
-import { SettingsPageContainer, SettingsRow, SettingsSection } from "./settingsLayout";
+import {
+  SettingResetButton,
+  SettingsPageContainer,
+  SettingsRow,
+  SettingsSection,
+} from "./settingsLayout";
 
 const ELEVENLABS_API_KEYS_URL = "https://elevenlabs.io/app/developers/api-keys";
 
@@ -57,6 +69,12 @@ export function VoiceSettingsPanel() {
   const t3BudEnabled = useClientSettings(selectT3BudEnabled);
   const speakMode = useClientSettings(selectT3BudSpeaks);
   const animal = useClientSettings(selectT3BudAnimal);
+  const size = useClientSettings(selectT3BudSize);
+  const sizeRatio = (size - MIN_T3BUD_SIZE) / (MAX_T3BUD_SIZE - MIN_T3BUD_SIZE);
+  const sizeSliderStyle = {
+    "--settings-slider-progress": `${sizeRatio * 100}%`,
+    "--settings-slider-fill-offset": `${0.5 - sizeRatio}rem`,
+  } as CSSProperties;
 
   return (
     <SettingsPageContainer>
@@ -105,6 +123,49 @@ export function VoiceSettingsPanel() {
             onValueChange={(next) => void updateClientSettings({ t3BudAnimal: next })}
           />
         </SettingsRow>
+        <SettingsRow
+          {...searchableSetting("t3bud-size")}
+          description="How wide T3Bud's circle is on this device. The animal grows and shrinks with it."
+          resetAction={
+            size !== DEFAULT_T3BUD_SIZE ? (
+              <SettingResetButton
+                label="T3Bud size"
+                onClick={() => void updateClientSettings({ t3BudSize: DEFAULT_T3BUD_SIZE })}
+              />
+            ) : null
+          }
+          control={
+            <div className="flex w-full items-center gap-3 sm:w-52">
+              <output
+                className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+                htmlFor="t3bud-size-slider"
+              >
+                {size}px
+              </output>
+              <input
+                aria-label="T3Bud size"
+                className="settings-slider min-w-0 flex-1"
+                id="t3bud-size-slider"
+                max={MAX_T3BUD_SIZE}
+                min={MIN_T3BUD_SIZE}
+                onChange={(event) => {
+                  const t3BudSize = Number(event.currentTarget.value);
+                  if (
+                    Number.isInteger(t3BudSize) &&
+                    t3BudSize >= MIN_T3BUD_SIZE &&
+                    t3BudSize <= MAX_T3BUD_SIZE
+                  ) {
+                    void updateClientSettings({ t3BudSize });
+                  }
+                }}
+                step={4}
+                style={sizeSliderStyle}
+                type="range"
+                value={size}
+              />
+            </div>
+          }
+        />
         <SettingsRow
           {...searchableSetting("t3bud-speaks")}
           description="What T3Bud says on a call without a question from you. Approvals, questions, failures and usage limits need you. Everything else still reaches it quietly, so you can ask."

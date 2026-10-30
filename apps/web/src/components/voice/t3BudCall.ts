@@ -4,6 +4,7 @@ import type { ClientSettings, T3BudAnimal } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 import { useSyncExternalStore } from "react";
 
+import { getClientSettings, updateClientSettings } from "../../hooks/useSettings";
 import { appAtomRegistry } from "../../rpc/atomRegistry";
 import { registerCommands } from "../../shortcuts/dispatcher";
 import { voiceCallReadinessAtom } from "../../state/voice";
@@ -32,6 +33,7 @@ function isCallActive(): boolean {
 export const selectT3BudEnabled = (settings: ClientSettings) => settings.t3BudEnabled;
 export const selectT3BudSpeaks = (settings: ClientSettings) => settings.t3BudSpeaks;
 export const selectT3BudAnimal = (settings: ClientSettings) => settings.t3BudAnimal;
+export const selectT3BudSize = (settings: ClientSettings) => settings.t3BudSize;
 
 const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 /** An animal's 3D head (`glb`) or its flat icon on the night disc (`png`). */
@@ -79,6 +81,22 @@ export function installT3BudShortcut(): () => void {
     dispose();
     startWhenLoaded = false;
   };
+}
+
+/** Shows or hides T3Bud on this device; hiding it ends a call. */
+export function toggleT3BudShown(): void {
+  void updateClientSettings({ t3BudEnabled: !getClientSettings().t3BudEnabled });
+}
+
+/** The show/hide shortcut, live while T3Bud is hidden too. */
+export function installT3BudVisibilityShortcut(): () => void {
+  return registerCommands({
+    "voice.toggleBuddy": (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) toggleT3BudShown();
+    },
+  });
 }
 
 export function useT3BudCallActive(): boolean {

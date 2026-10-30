@@ -948,6 +948,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["t3bud animal mascot wolf frog capybara axolotl avatar"],
   },
   {
+    id: "t3bud-size",
+    title: "Size",
+    to: "/settings/voice",
+    searchTerms: ["t3bud size width circle diameter bigger smaller scale avatar"],
+  },
+  {
     id: "t3bud-speaks",
     title: "Speak updates aloud",
     to: "/settings/voice",

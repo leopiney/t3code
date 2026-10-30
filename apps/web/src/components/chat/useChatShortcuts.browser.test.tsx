@@ -1,3 +1,4 @@
+import { compileResolvedKeybindingsConfig } from "@t3tools/shared/keybindings";
 import { useEffect } from "react";
 import { expect, it } from "vite-plus/test";
 import { userEvent } from "vite-plus/test/browser";
@@ -114,6 +115,81 @@ it("leaves a non-Latin launcher letter to the launcher by its physical key", asy
 
   expect(composerKeys).toEqual([]);
   expect(received).toEqual(["\u0435"]);
+});
+
+const effortBindings = compileResolvedKeybindingsConfig([
+  {
+    key: "shift+tab",
+    command: "composer.increaseEffort",
+    when: "composerFocus && !terminalFocus && !modelPickerOpen",
+  },
+]);
+
+function EffortShortcuts(props: {
+  composerFocus: boolean;
+  ownsShiftTab?: boolean;
+  stepped: Array<1 | -1>;
+  canStep?: boolean;
+}) {
+  useChatShortcuts({
+    enabled: true,
+    keybindings: effortBindings,
+    scriptKeybindings: [],
+    getShortcutContext: () => ({ ...shortcutContext, composerFocus: props.composerFocus }),
+    threadFindActive: false,
+    composerRef: {
+      current: {
+        ownsShiftTab: () => props.ownsShiftTab === true,
+        stepReasoningEffort: (direction: 1 | -1) => {
+          props.stepped.push(direction);
+          return props.canStep !== false;
+        },
+      } as Partial<ChatComposerHandle> as ChatComposerHandle,
+    },
+    branchToolbarRef: { current: null },
+    closeThreadFind: () => {},
+    commands: {},
+    fallback: () => undefined,
+  });
+  return <div ref={focusOnMount} tabIndex={0} />;
+}
+
+function pressShiftTab(): boolean {
+  const event = new KeyboardEvent("keydown", {
+    key: "Tab",
+    shiftKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  (document.activeElement ?? document.body).dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
+it("cycles effort on Shift+Tab while the composer is focused", async () => {
+  const stepped: Array<1 | -1> = [];
+  await using _screen = await render(<EffortShortcuts composerFocus stepped={stepped} />, options);
+
+  expect(pressShiftTab()).toBe(true);
+  expect(stepped).toEqual([1]);
+});
+
+it("leaves Shift+Tab alone outside the composer, in a code block, or with nothing to cycle", async () => {
+  const stepped: Array<1 | -1> = [];
+  await using screen = await render(
+    <EffortShortcuts composerFocus={false} stepped={stepped} />,
+    options,
+  );
+
+  expect(pressShiftTab()).toBe(false);
+  expect(stepped).toEqual([]);
+
+  await screen.rerender(<EffortShortcuts composerFocus ownsShiftTab stepped={stepped} />);
+  expect(pressShiftTab()).toBe(false);
+  expect(stepped).toEqual([]);
+
+  await screen.rerender(<EffortShortcuts composerFocus canStep={false} stepped={stepped} />);
+  expect(pressShiftTab()).toBe(false);
+  expect(stepped).toEqual([1]);
 });
 
 it.each([

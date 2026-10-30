@@ -68,6 +68,7 @@ type TraitsRenderInput = {
   extraMenuContent?: ReactNode;
   extraMenuOwnsModeShortcut?: boolean;
   extraMenuHint?: string;
+  cycleShortcutLabel?: string;
 };
 
 export function getComposerPromptInjectionState(prompt: string): ComposerPromptInjectionState {
@@ -241,6 +242,7 @@ function renderTraitsControl(
     extraMenuContent,
     extraMenuOwnsModeShortcut,
     extraMenuHint,
+    cycleShortcutLabel,
   } = input;
   const hasTarget = threadRef !== undefined || draftId !== undefined;
   const { selections: resolvedModelOptions } = resolveComposerOptionSelections(
@@ -284,6 +286,7 @@ function renderTraitsControl(
       {...(extraMenuContent ? { extraMenuContent } : {})}
       {...(extraMenuOwnsModeShortcut ? { extraMenuOwnsModeShortcut } : {})}
       {...(extraMenuHint ? { extraMenuHint } : {})}
+      {...(cycleShortcutLabel ? { cycleShortcutLabel } : {})}
     />
   );
 }

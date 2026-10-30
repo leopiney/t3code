@@ -767,6 +767,36 @@ describe("composer and pull request shortcuts", () => {
     }
   });
 
+  it("cycles effort with Shift+Tab only while the composer is focused", () => {
+    const shiftTab = event({ key: "Tab", shiftKey: true });
+    const focused = { context: { composerFocus: true } };
+    assert.strictEqual(
+      resolveShortcutCommand(shiftTab, DEFAULT_RESOLVED_KEYBINDINGS, focused),
+      "composer.increaseEffort",
+    );
+    assert.isNull(resolveShortcutCommand(shiftTab, DEFAULT_RESOLVED_KEYBINDINGS));
+    assert.isNull(
+      resolveShortcutCommand(shiftTab, DEFAULT_RESOLVED_KEYBINDINGS, {
+        context: { composerFocus: true, modelPickerOpen: true },
+      }),
+    );
+    assert.isNull(
+      resolveShortcutCommand(shiftTab, DEFAULT_RESOLVED_KEYBINDINGS, {
+        context: { composerFocus: true, terminalFocus: true },
+      }),
+    );
+    assert.strictEqual(
+      shortcutLabelForCommand(DEFAULT_RESOLVED_KEYBINDINGS, "composer.increaseEffort", {
+        platform: "MacIntel",
+        ...focused,
+      }),
+      "⇧Tab",
+    );
+    assert.isNull(
+      shortcutLabelForCommand(DEFAULT_RESOLVED_KEYBINDINGS, "composer.decreaseEffort", focused),
+    );
+  });
+
   it.each(["MacIntel", "Win32", "Linux"])(
     "reserves the alternate send chord for the focused composer on %s",
     (platform) => {

@@ -13,6 +13,17 @@ import type { BranchToolbarHandle } from "../BranchToolbar";
 import { shouldTypeToFocusComposer } from "./composerFocusRedirect";
 import { composerShortcutCommands } from "./composerShortcuts";
 
+function isBareShiftTab(event: KeyboardEvent): boolean {
+  return (
+    event.key === "Tab" &&
+    event.shiftKey &&
+    !event.altKey &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.isComposing
+  );
+}
+
 /** Returning false lets the key event through untouched. */
 type ChatShortcutHandler = (context: {
   readonly event: KeyboardEvent;
@@ -75,6 +86,8 @@ export function useChatShortcuts(input: ChatShortcutsInput) {
       context: shortcutContext,
     });
     if (!command) return;
+    // Code blocks, citation comments, and legacy Plan mode keep Shift+Tab.
+    if (isBareShiftTab(event) && input.composerRef.current?.ownsShiftTab() === true) return;
     const run =
       input.commands[command] ??
       composerShortcutCommands(input.composerRef, input.branchToolbarRef)[command] ??

@@ -152,6 +152,11 @@ export function ComposerControlsBar(props: {
   });
   const accessMatchesDefault = compatibleRuntimeMode === defaultRuntimeMode;
   const permissionsChipHidden = accessMatchesDefault || props.permissionsShownInStrip;
+  const cycleEffortShortcutLabel = planModeUiEnabled
+    ? undefined
+    : (shortcutLabelForCommand(keybindings, "composer.increaseEffort", {
+        context: { composerFocus: true },
+      }) ?? undefined);
   const providerTraitsPickerInput = {
     provider: selectedProvider,
     instanceId: selectedInstanceId,
@@ -166,6 +171,7 @@ export function ComposerControlsBar(props: {
     planModeEnabled,
     isComposerOwned: true,
     effortDisplay: props.effortDisplay,
+    ...(cycleEffortShortcutLabel ? { cycleShortcutLabel: cycleEffortShortcutLabel } : {}),
     triggerClassName: cn("ps-1.5 pe-1", TEXT_CONTROL_STATES),
     // Permissions always live in the effort menu, so the section never unmounts while open.
     extraMenuContent: (

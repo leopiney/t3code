@@ -3,7 +3,7 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { VoiceAgentSpeakMode } from "@t3tools/contracts";
+import { T3BudAnimal, VoiceAgentSpeakMode } from "@t3tools/contracts";
 import { ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -19,13 +19,20 @@ import { voiceEnvironment } from "../../state/voice";
 import { Button, InlineButton } from "../ui/button";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
-import { selectWolfBudEnabled, selectWolfBudSpeaks } from "../voice/wolfBudCall";
+import { selectT3BudAnimal, selectT3BudEnabled, selectT3BudSpeaks } from "../voice/t3BudCall";
 import { SecretInput } from "./SecretInput";
 import { useSettingsScope } from "./SettingsScopeContext";
 import { searchableSetting } from "./settingsSearch";
 import { SettingsPageContainer, SettingsRow, SettingsSection } from "./settingsLayout";
 
 const ELEVENLABS_API_KEYS_URL = "https://elevenlabs.io/app/developers/api-keys";
+
+const ANIMAL_LABELS: Record<T3BudAnimal, string> = {
+  wolf: "Wolf",
+  frog: "Frog",
+  capybara: "Capybara",
+  axolotl: "Axolotl",
+};
 
 const SPEAK_MODE_LABELS: Record<VoiceAgentSpeakMode, string> = {
   all: "Finished work and what needs you",
@@ -40,8 +47,9 @@ type SetupState =
 
 export function VoiceSettingsPanel() {
   const { environment, scope } = useSettingsScope();
-  const wolfBudEnabled = useClientSettings(selectWolfBudEnabled);
-  const speakMode = useClientSettings(selectWolfBudSpeaks);
+  const t3BudEnabled = useClientSettings(selectT3BudEnabled);
+  const speakMode = useClientSettings(selectT3BudSpeaks);
+  const animal = useClientSettings(selectT3BudAnimal);
 
   return (
     <SettingsPageContainer>
@@ -67,29 +75,53 @@ export function VoiceSettingsPanel() {
         )}
       </SettingsSection>
 
-      <SettingsSection id="wolfbud" title="WolfBud">
+      <SettingsSection id="t3bud" title="T3Bud">
         <SettingsRow
-          {...searchableSetting("wolfbud-enabled")}
-          description="A wolf in the corner of every screen on this device. Call it to hear what your threads need and tell them what to do."
+          {...searchableSetting("t3bud-enabled")}
+          description="A voice buddy in the corner of every screen on this device. Call it to hear what your threads need and tell them what to do."
           control={
             <Switch
-              checked={wolfBudEnabled}
+              checked={t3BudEnabled}
               onCheckedChange={(checked) =>
-                void updateClientSettings({ wolfBudEnabled: Boolean(checked) })
+                void updateClientSettings({ t3BudEnabled: Boolean(checked) })
               }
-              aria-label="Show WolfBud"
+              aria-label="Show T3Bud"
             />
           }
         />
         <SettingsRow
-          {...searchableSetting("wolfbud-speaks")}
-          description="What WolfBud says on a call without a question from you. Approvals, questions, failures and usage limits need you. Everything else still reaches it quietly, so you can ask."
+          {...searchableSetting("t3bud-animal")}
+          description="The animal T3Bud appears as on this device. It plays the same one on calls."
+          control={
+            <Select
+              value={animal}
+              onValueChange={(value) => {
+                const next = T3BudAnimal.literals.find((candidate) => candidate === value);
+                if (next) void updateClientSettings({ t3BudAnimal: next });
+              }}
+            >
+              <SelectTrigger size="sm" className="w-full sm:w-64" aria-label="T3Bud's animal">
+                <SelectValue>{(value: T3BudAnimal) => ANIMAL_LABELS[value]}</SelectValue>
+              </SelectTrigger>
+              <SelectPopup align="end" alignItemWithTrigger={false}>
+                {T3BudAnimal.literals.map((option) => (
+                  <SelectItem hideIndicator key={option} value={option}>
+                    {ANIMAL_LABELS[option]}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+          }
+        />
+        <SettingsRow
+          {...searchableSetting("t3bud-speaks")}
+          description="What T3Bud says on a call without a question from you. Approvals, questions, failures and usage limits need you. Everything else still reaches it quietly, so you can ask."
           control={
             <Select
               value={speakMode}
               onValueChange={(value) => {
                 const mode = VoiceAgentSpeakMode.literals.find((candidate) => candidate === value);
-                if (mode) void updateClientSettings({ wolfBudSpeaks: mode });
+                if (mode) void updateClientSettings({ t3BudSpeaks: mode });
               }}
             >
               <SelectTrigger size="sm" className="w-full sm:w-64" aria-label="Speak updates aloud">
@@ -214,7 +246,7 @@ function ElevenLabsSettings({ environment }: { readonly environment: Environment
       />
       <SettingsRow
         {...searchableSetting("voice-agent-setup")}
-        description="The first call creates WolfBud for T3 Code in your ElevenLabs account and keeps it up to date. Set it up now to check the key."
+        description="The first call creates T3Bud in your ElevenLabs account and keeps it up to date. Set it up now to check the key."
         status={
           setup.status === "done" ? (
             setup.message

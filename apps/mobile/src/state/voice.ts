@@ -43,7 +43,7 @@ export const voiceCallCandidatesAtom = Atom.make((get) =>
 /** Why this device can't place a call, or null when it can or the sessions are still loading. */
 export const voiceCallBlockerAtom = Atom.make((get): string | null => {
   const candidates = get(voiceCallCandidatesAtom);
-  if (candidates.length === 0) return "Connect to an environment to call WolfBud.";
+  if (candidates.length === 0) return "Connect to an environment to call T3Bud.";
   const keyed = candidates.filter((candidate) => candidate.hasKey);
   const [first] = keyed;
   if (first === undefined) return "Add an ElevenLabs API key in Settings › Voice.";

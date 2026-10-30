@@ -1,13 +1,20 @@
 import { lazy, Suspense, useEffect } from "react";
 
 import { useClientSettings } from "../../hooks/useSettings";
-import { installT3BudShortcut, selectT3BudEnabled } from "./t3BudCall";
+import {
+  installT3BudShortcut,
+  installT3BudVisibilityShortcut,
+  selectT3BudEnabled,
+} from "./t3BudCall";
 
 // The call code, the ElevenLabs SDK and three.js load only once T3Bud is shown.
 const T3Bud = lazy(() => import("./T3Bud").then((module) => ({ default: module.T3Bud })));
 
 export function T3BudHost() {
   const enabled = useClientSettings(selectT3BudEnabled);
+
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- registers the show/hide shortcut with the global keydown dispatcher
+  useEffect(installT3BudVisibilityShortcut, []);
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- registers the call shortcut with the global keydown dispatcher while T3Bud is shown
   useEffect(() => {

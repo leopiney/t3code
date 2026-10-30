@@ -23,6 +23,15 @@ export type VoiceAgentSpeakMode = typeof VoiceAgentSpeakMode.Type;
 export const T3BudAnimal = Schema.Literals(["wolf", "frog", "capybara", "axolotl"]);
 export type T3BudAnimal = typeof T3BudAnimal.Type;
 
+/** T3Bud's circle diameter in CSS px; the animal fills it. */
+export const MIN_T3BUD_SIZE = 40;
+export const MAX_T3BUD_SIZE = 128;
+export const T3BudSize = Schema.Int.check(
+  Schema.isBetween({ minimum: MIN_T3BUD_SIZE, maximum: MAX_T3BUD_SIZE }),
+);
+export type T3BudSize = typeof T3BudSize.Type;
+export const DEFAULT_T3BUD_SIZE: T3BudSize = 64;
+
 export const VoiceCreateCallTokenResult = Schema.Struct({
   token: TrimmedNonEmptyString,
   agentId: TrimmedNonEmptyString,

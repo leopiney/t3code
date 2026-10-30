@@ -7,7 +7,8 @@ import {
 import { AuthSettingsWriteScope, T3BudAnimal, type VoiceAgentSpeakMode } from "@t3tools/contracts";
 import { AsyncResult } from "effect/reactivity";
 import { useState } from "react";
-import { View } from "react-native";
+import { Image } from "expo-image";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText as Text, AppTextInput } from "../../components/ui/AppText";
@@ -24,17 +25,11 @@ import { serverEnvironment } from "../../state/server";
 import { useEnvironmentsWithScope } from "../../state/session";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { voiceEnvironment } from "../../state/voice";
+import { T3BUD_ANIMAL_IMAGES, T3BUD_ANIMAL_LABELS } from "../voice-agent/t3BudAnimals";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { SettingsSection } from "./components/SettingsSection";
 import { SettingsSwitchRow } from "./components/SettingsSwitchRow";
 import type { SettingsTarget } from "./settings-environment-filter";
-
-const ANIMAL_LABELS: Record<T3BudAnimal, string> = {
-  wolf: "Wolf",
-  frog: "Frog",
-  capybara: "Capybara",
-  axolotl: "Axolotl",
-};
 
 const SPEAK_OPTIONS: ReadonlyArray<{
   readonly mode: VoiceAgentSpeakMode;
@@ -94,16 +89,11 @@ function T3BudSettingsSections() {
         />
       </SettingsSection>
       <SettingsSection title="Animal" footer="T3Bud plays the same animal on calls.">
-        {T3BudAnimal.literals.map((option, index) => (
-          <SettingsChoiceRow
-            key={option}
-            label={ANIMAL_LABELS[option]}
-            selected={animal === option}
-            separated={index > 0}
-            disabled={!ready}
-            onPress={() => savePreferences({ t3BudAnimal: option })}
-          />
-        ))}
+        <T3BudAnimalPicker
+          value={animal}
+          disabled={!ready}
+          onChange={(next) => savePreferences({ t3BudAnimal: next })}
+        />
       </SettingsSection>
       <SettingsSection
         title="Speak updates aloud"
@@ -122,6 +112,52 @@ function T3BudSettingsSections() {
         ))}
       </SettingsSection>
     </>
+  );
+}
+
+/** Every animal as its icon, four across; the chosen one is ringed and the rest dimmed. */
+function T3BudAnimalPicker(props: {
+  readonly value: T3BudAnimal;
+  readonly disabled: boolean;
+  readonly onChange: (animal: T3BudAnimal) => void;
+}) {
+  return (
+    <View accessibilityRole="radiogroup" className="flex-row bg-grouped-card px-2 py-3">
+      {T3BudAnimal.literals.map((option) => {
+        const selected = props.value === option;
+        return (
+          <Pressable
+            key={option}
+            accessibilityRole="radio"
+            accessibilityLabel={T3BUD_ANIMAL_LABELS[option]}
+            accessibilityState={{ checked: selected, disabled: props.disabled }}
+            disabled={props.disabled}
+            onPress={() => props.onChange(option)}
+            className={cn("flex-1 items-center gap-1.5", !selected && "opacity-45")}
+          >
+            <View
+              className={cn(
+                "rounded-full border-2 p-0.5",
+                selected ? "border-primary" : "border-transparent",
+              )}
+            >
+              <Image
+                source={T3BUD_ANIMAL_IMAGES[option]}
+                style={{ width: 52, height: 52 }}
+                contentFit="contain"
+                accessibilityIgnoresInvertColors
+              />
+            </View>
+            <Text
+              textRole="caption"
+              className={cn(selected ? "font-t3-medium text-foreground" : "text-foreground-muted")}
+            >
+              {T3BUD_ANIMAL_LABELS[option]}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 

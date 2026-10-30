@@ -1,4 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
+import { Radio as RadioPrimitive } from "@base-ui/react/radio";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
@@ -17,9 +18,15 @@ import { serverEnvironment } from "../../state/server";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { voiceEnvironment } from "../../state/voice";
 import { Button, InlineButton } from "../ui/button";
+import { RadioGroup } from "../ui/radio-group";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
-import { selectT3BudAnimal, selectT3BudEnabled, selectT3BudSpeaks } from "../voice/t3BudCall";
+import {
+  selectT3BudAnimal,
+  selectT3BudEnabled,
+  selectT3BudSpeaks,
+  t3BudAssetUrl,
+} from "../voice/t3BudCall";
 import { SecretInput } from "./SecretInput";
 import { useSettingsScope } from "./SettingsScopeContext";
 import { searchableSetting } from "./settingsSearch";
@@ -92,27 +99,12 @@ export function VoiceSettingsPanel() {
         <SettingsRow
           {...searchableSetting("t3bud-animal")}
           description="The animal T3Bud appears as on this device. It plays the same one on calls."
-          control={
-            <Select
-              value={animal}
-              onValueChange={(value) => {
-                const next = T3BudAnimal.literals.find((candidate) => candidate === value);
-                if (next) void updateClientSettings({ t3BudAnimal: next });
-              }}
-            >
-              <SelectTrigger size="sm" className="w-full sm:w-64" aria-label="T3Bud's animal">
-                <SelectValue>{(value: T3BudAnimal) => ANIMAL_LABELS[value]}</SelectValue>
-              </SelectTrigger>
-              <SelectPopup align="end" alignItemWithTrigger={false}>
-                {T3BudAnimal.literals.map((option) => (
-                  <SelectItem hideIndicator key={option} value={option}>
-                    {ANIMAL_LABELS[option]}
-                  </SelectItem>
-                ))}
-              </SelectPopup>
-            </Select>
-          }
-        />
+        >
+          <T3BudAnimalPicker
+            value={animal}
+            onValueChange={(next) => void updateClientSettings({ t3BudAnimal: next })}
+          />
+        </SettingsRow>
         <SettingsRow
           {...searchableSetting("t3bud-speaks")}
           description="What T3Bud says on a call without a question from you. Approvals, questions, failures and usage limits need you. Everything else still reaches it quietly, so you can ask."
@@ -141,6 +133,45 @@ export function VoiceSettingsPanel() {
         />
       </SettingsSection>
     </SettingsPageContainer>
+  );
+}
+
+/** Every animal as its icon; the chosen one is ringed and the rest dim until hovered. */
+function T3BudAnimalPicker({
+  value,
+  onValueChange,
+}: {
+  readonly value: T3BudAnimal;
+  readonly onValueChange: (animal: T3BudAnimal) => void;
+}) {
+  return (
+    <RadioGroup
+      aria-label="T3Bud's animal"
+      value={value}
+      onValueChange={(next) => {
+        const animal = T3BudAnimal.literals.find((candidate) => candidate === next);
+        if (animal) onValueChange(animal);
+      }}
+      className="mt-3 mb-2 grid max-w-md grid-cols-4"
+    >
+      {T3BudAnimal.literals.map((option) => (
+        <RadioPrimitive.Root
+          key={option}
+          value={option}
+          className="flex cursor-pointer flex-col items-center gap-1.5 rounded-lg p-2 text-muted-foreground opacity-50 outline-none transition-opacity hover:opacity-80 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring data-checked:bg-primary/8 data-checked:text-foreground data-checked:opacity-100 data-checked:ring-2 data-checked:ring-inset data-checked:ring-primary dark:data-checked:bg-primary/15"
+        >
+          <img
+            src={t3BudAssetUrl(option, "png")}
+            alt=""
+            draggable={false}
+            width={56}
+            height={56}
+            className="size-14 rounded-full"
+          />
+          <span className="text-xs font-medium">{ANIMAL_LABELS[option]}</span>
+        </RadioPrimitive.Root>
+      ))}
+    </RadioGroup>
   );
 }
 

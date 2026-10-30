@@ -1,6 +1,5 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { VoiceFeedEntry, VoiceSessionState } from "@t3tools/client-runtime/voice/types";
-import type { T3BudAnimal } from "@t3tools/contracts";
 import { AsyncResult } from "effect/reactivity";
 import { Image } from "expo-image";
 import { useState } from "react";
@@ -15,17 +14,12 @@ import { AppText as Text } from "../../components/ui/AppText";
 import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/cn";
 import { mobilePreferencesAtom } from "../../state/preferences";
+import { T3BUD_ANIMAL_IMAGES } from "./t3BudAnimals";
 import {
   DICTATION_PILL_HEIGHT,
   useEdgeControlBottom,
 } from "../voice-input/GlobalVoiceInputControl";
 
-const ANIMAL_IMAGES: Record<T3BudAnimal, number> = {
-  wolf: require("../../../assets/t3bud/wolf.png"),
-  frog: require("../../../assets/t3bud/frog.png"),
-  capybara: require("../../../assets/t3bud/capybara.png"),
-  axolotl: require("../../../assets/t3bud/axolotl.png"),
-};
 const TAB_WIDTH = 60;
 const TAB_HEIGHT = 48;
 const CARD_MAX_WIDTH = 320;
@@ -87,7 +81,7 @@ function BuddyAvatar(props: { readonly state: VoiceSessionState; readonly size: 
       style={{ width: size + 4, height: size + 4 }}
     >
       <Image
-        source={ANIMAL_IMAGES[animal]}
+        source={T3BUD_ANIMAL_IMAGES[animal]}
         style={{ width: size, height: size, opacity: state.status === "connecting" ? 0.5 : 1 }}
         contentFit="contain"
         accessibilityIgnoresInvertColors

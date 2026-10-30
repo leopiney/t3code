@@ -3474,6 +3474,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             ...thread,
             settledOverride: "settled",
             settledAt: alreadySettled ? thread.settledAt : (command.settledAt ?? now),
+            settledNote: command.note ?? (alreadySettled ? (thread.settledNote ?? null) : null),
             pullRequests: thread.pullRequests?.map((link) => withPullRequestWatch(link, undefined)),
             unsettledAt: null,
             pinnedAt: null,
@@ -3482,7 +3483,10 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             snoozedUntil: null,
             snoozedAt: null,
             updatedAt:
-              alreadySettled && thread.snoozedUntil == null && thread.snoozedAt == null
+              alreadySettled &&
+              thread.snoozedUntil == null &&
+              thread.snoozedAt == null &&
+              (command.note === undefined || command.note === thread.settledNote)
                 ? thread.updatedAt
                 : now,
           };
@@ -3494,6 +3498,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             settledOverride: "active",
             settledAt: null,
             unsettledAt: alreadyPinnedActive ? (thread.unsettledAt ?? null) : now,
+            settledNote: null,
             updatedAt: alreadyPinnedActive ? thread.updatedAt : now,
           };
         }
@@ -3537,6 +3542,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             settledOverride:
               thread.settledOverride === "settled" ? "active" : thread.settledOverride,
             settledAt: thread.settledOverride === "settled" ? null : thread.settledAt,
+            settledNote: null,
             snoozedUntil: null,
             snoozedAt: null,
             lastSnoozeWakeAt: thread.snoozedUntil == null ? thread.lastSnoozeWakeAt : now,
@@ -5501,6 +5507,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         ...projection.thread,
         settledOverride: null,
         settledAt: null,
+        settledNote: null,
         unsettledAt:
           projection.thread.settledOverride === "active"
             ? (projection.thread.unsettledAt ?? null)

@@ -19,6 +19,7 @@ import {
   RunId,
   NonNegativeInt,
   ProjectId,
+  ThreadSettledNote,
 } from "@t3tools/contracts";
 import * as Crypto from "effect/Crypto";
 import * as Schema from "effect/Schema";
@@ -47,6 +48,11 @@ const ThreadOrganizeTool = Tool.make("t3_thread_organize", {
       "mark_unread",
     ]),
     snoozedUntil: Schema.optional(IsoDateTime),
+    note: Schema.optional(
+      ThreadSettledNote.annotate({
+        description: 'With `settle`: a short closing note, like "done" or "wrapped up".',
+      }),
+    ),
   }),
   success: Schema.Union([
     OrchestrationV2DispatchCommandResult,

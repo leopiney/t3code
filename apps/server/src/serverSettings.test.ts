@@ -1277,7 +1277,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
   );
 
   it.effect(
-    "uses the same secret lifecycle for provider config, environment, host tokens, and quota keys",
+    "uses the same secret lifecycle for provider config, environment, host tokens, quota and voice keys",
     () =>
       Effect.gen(function* () {
         const service = yield* ServerSettingsModule.ServerSettingsService;
@@ -1320,6 +1320,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
               maxConcurrentSessions: 2,
             },
           ],
+          voiceAgent: { elevenLabsApiKey: "voice-secret" },
         });
         const values = [
           "config-secret",
@@ -1329,6 +1330,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
           "gitcafe-secret",
           "quota-secret",
           "expo-secret",
+          "voice-secret",
         ];
         const client = ServerSettingsModule.redactServerSettingsForClient(saved);
         const disk = yield* fs.readFileString(config.settingsPath);
@@ -1344,6 +1346,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
           sourceControlHosts: client.sourceControlHosts,
           usageLimitSources: client.usageLimitSources,
           easDeviceHosts: client.easDeviceHosts,
+          voiceAgent: client.voiceAgent,
         });
         for (const value of values) assert.include(JSON.stringify(echoed), value);
         const renamed = yield* service.updateProviderInstance({
@@ -1393,6 +1396,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
           }),
           sourceControlHostSecretName({ kind: "gitcafe", field: "token", serverHost: null }),
           "usage-limit-source-aHVi",
+          "voice-agent-ZWxldmVuTGFic0FwaUtleQ",
         ];
         for (const name of secretNames) {
           assert.isTrue(Option.isSome(yield* store.get(name)), name);
@@ -1426,6 +1430,7 @@ it.layer(NodeServices.layer)("server settings", (it) => {
             gitcafe: { token: "" },
           },
           usageLimitSources: { [UsageLimitSourceId.make("hub")]: null },
+          voiceAgent: { elevenLabsApiKey: "" },
         });
         for (const name of secretNames) {
           assert.isTrue(Option.isNone(yield* store.get(name)));

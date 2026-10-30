@@ -33,6 +33,7 @@ import { ReopenClosedViewShortcut } from "../components/ReopenClosedViewShortcut
 import { ProjectCloneToastCoordinator } from "../components/ProjectCloneToastCoordinator";
 import { ChatGptWelcomeCoordinator } from "../components/settings/ChatGptWelcomeCoordinator";
 import { ThemeEditorHost } from "../components/settings/ThemeEditorHost";
+import { WolfBudHost } from "../components/voice/WolfBudHost";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { Button } from "../components/ui/button";
 import { MorphIcon } from "~/components/MorphIcon";
@@ -219,6 +220,8 @@ function RootRouteBranch() {
         {appShell}
         {/* Keep the theme editor above the router so drafts survive navigation. */}
         <ThemeEditorHost />
+        {/* Above the router too, so a call survives navigation. */}
+        <WolfBudHost />
       </FirstRunGate>
     </>
   );

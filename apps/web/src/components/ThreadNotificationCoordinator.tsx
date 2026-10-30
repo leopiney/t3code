@@ -3,6 +3,12 @@ import {
   type PendingSubagentRequest,
   presentThreadShell,
 } from "@t3tools/client-runtime/state/models";
+import {
+  createThreadNotificationGate,
+  observeThreadNotification,
+  type ThreadNotificationKind,
+  type ThreadNotificationState,
+} from "@t3tools/client-runtime/state/thread-notification-gate";
 import { isShownUnderParent } from "@t3tools/client-runtime/state/threads";
 import type { AnyRouter } from "@tanstack/react-router";
 import { threadKey } from "@t3tools/client-runtime/state/entities";
@@ -30,19 +36,12 @@ import {
   threadNotificationTag,
   unlockNotificationAudio,
 } from "../threadNotifications";
-import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "./Sidebar.logic";
-import {
-  createThreadNotificationGate,
-  type ThreadNotificationKind,
-  type ThreadNotificationObservation,
-} from "./ThreadNotificationCoordinator.logic";
 import { toastManager } from "./ui/toast";
 
-interface NotificationState extends ThreadNotificationObservation {
+interface NotificationState extends ThreadNotificationState {
   readonly raw: OrchestrationV2ThreadShell;
   readonly subagentRequest: PendingSubagentRequest | null;
   readonly thread: EnvironmentThreadShell;
-  readonly status: SidebarThreadStatus;
 }
 
 type ToastId = ReturnType<typeof toastManager.add>;
@@ -250,26 +249,11 @@ export function startThreadNotifications(
         continue;
       }
       const thread = presentThreadShell(environmentId, rawThread, subagentRequest);
-      let status = resolveSidebarThreadStatus(thread);
-      if (status === "ready" && thread.latestRun?.status === "failed") status = "failed";
-      const attention =
-        status === "input" ||
-        status === "request" ||
-        status === "approval" ||
-        status === "failed" ||
-        status === "limited"
-          ? `${thread.latestRun?.runId ?? ""}:${status}`
-          : null;
-      const completedAt = Date.parse(thread.latestRun?.completedAt ?? "");
-      const settled = status === "ready" && thread.latestRun?.status === "completed";
       const state = {
         raw: rawThread,
         subagentRequest,
         thread,
-        status,
-        attention,
-        settled,
-        completedAt: settled && Number.isFinite(completedAt) ? completedAt : null,
+        ...observeThreadNotification(thread),
       };
       next.set(thread.id, state);
       changed.push([prior, state]);

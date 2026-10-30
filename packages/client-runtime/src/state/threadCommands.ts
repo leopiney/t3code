@@ -35,6 +35,7 @@ import {
   resumeThreadQueue,
   retryWorkspacePreparation,
   linkThreadPullRequest,
+  readThreadProjection,
   respondToThreadApproval,
   respondToThreadUserInput,
   dismissThreadUserInput,
@@ -268,6 +269,11 @@ export function createThreadEnvironmentAtoms<R, E>(
       execute: interruptTurn,
       scheduler,
       concurrency,
+    }),
+    readProjection: createEnvironmentCommand(runtime, {
+      label: "environment-data:commands:thread:read-projection",
+      execute: readThreadProjection,
+      scheduler,
     }),
     respondToApproval: createEnvironmentCommand(runtime, {
       label: "environment-data:commands:thread:respond-to-approval",

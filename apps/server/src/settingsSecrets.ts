@@ -7,6 +7,7 @@ import {
   SimlockDeviceHostConfig,
   UsageLimitSourceConfig,
   isSecretReference,
+  VoiceAgentSettings,
   secretSettingsFields,
 } from "@t3tools/contracts";
 import { acpRegistryClient } from "@t3tools/provider-acp-registry/client";
@@ -36,6 +37,7 @@ const providerSecretFields = new Map([
 const usageLimitSecretFields = secretSettingsFields(UsageLimitSourceConfig);
 const easDeviceHostSecretFields = secretSettingsFields(EasDeviceHostConfig);
 const simlockDeviceHostSecretFields = secretSettingsFields(SimlockDeviceHostConfig);
+const voiceAgentSecretFields = secretSettingsFields(VoiceAgentSettings);
 const encode = (value: string) => Buffer.from(value, "utf8").toString("base64url");
 
 export interface SettingsSecret {
@@ -173,6 +175,12 @@ export function mapSettingsSecrets(
       ) as SimlockDeviceHostConfig,
   );
 
+  const voiceAgent = mapFields(
+    settings.voiceAgent,
+    voiceAgentSecretFields,
+    (field) => `voice-agent-${encode(field)}`,
+  ) as ServerSettings["voiceAgent"];
+
   return {
     ...settings,
     providerInstances,
@@ -180,5 +188,6 @@ export function mapSettingsSecrets(
     usageLimitSources,
     easDeviceHosts,
     simlockDeviceHosts,
+    voiceAgent,
   };
 }

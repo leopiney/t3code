@@ -76,6 +76,7 @@ import IconGitPullRequest from "@tabler/icons-react-native/IconGitPullRequest";
 import IconHammer from "@tabler/icons-react-native/IconHammer";
 import IconHome from "@tabler/icons-react-native/IconHome";
 import IconInfoCircle from "@tabler/icons-react-native/IconInfoCircle";
+import IconKey from "@tabler/icons-react-native/IconKey";
 import IconKeyboard from "@tabler/icons-react-native/IconKeyboard";
 import IconKeyboardHide from "@tabler/icons-react-native/IconKeyboardHide";
 import IconLock from "@tabler/icons-react-native/IconLock";
@@ -84,6 +85,7 @@ import IconLayoutSidebar from "@tabler/icons-react-native/IconLayoutSidebar";
 import IconLayoutSidebarRight from "@tabler/icons-react-native/IconLayoutSidebarRight";
 import IconLetterSpacing from "@tabler/icons-react-native/IconLetterSpacing";
 import IconMicrophone from "@tabler/icons-react-native/IconMicrophone";
+import IconMicrophoneOff from "@tabler/icons-react-native/IconMicrophoneOff";
 import IconLink from "@tabler/icons-react-native/IconLink";
 import IconListNumbers from "@tabler/icons-react-native/IconListNumbers";
 import IconMenu2 from "@tabler/icons-react-native/IconMenu2";
@@ -95,6 +97,8 @@ import IconMoon from "@tabler/icons-react-native/IconMoon";
 import IconNetwork from "@tabler/icons-react-native/IconNetwork";
 import IconPalette from "@tabler/icons-react-native/IconPalette";
 import IconPencil from "@tabler/icons-react-native/IconPencil";
+import IconPhone from "@tabler/icons-react-native/IconPhone";
+import IconPhoneOff from "@tabler/icons-react-native/IconPhoneOff";
 import IconPlug from "@tabler/icons-react-native/IconPlug";
 import IconPhoto from "@tabler/icons-react-native/IconPhoto";
 import IconPin from "@tabler/icons-react-native/IconPin";
@@ -130,6 +134,7 @@ import IconUserX from "@tabler/icons-react-native/IconUserX";
 import IconUserQuestion from "@tabler/icons-react-native/IconUserQuestion";
 import IconUserPlus from "@tabler/icons-react-native/IconUserPlus";
 import IconUsers from "@tabler/icons-react-native/IconUsers";
+import IconWaveSine from "@tabler/icons-react-native/IconWaveSine";
 import IconWifi from "@tabler/icons-react-native/IconWifi";
 import IconWifiOff from "@tabler/icons-react-native/IconWifiOff";
 import IconWorld from "@tabler/icons-react-native/IconWorld";
@@ -217,6 +222,7 @@ const ANDROID_ICON_BY_SF_SYMBOL = {
   "info.circle": IconInfoCircle,
   internaldrive: IconDatabase,
   iphone: IconDeviceMobile,
+  key: IconKey,
   keyboard: IconKeyboard,
   laptopcomputer: IconDeviceLaptop,
   link: IconLink,
@@ -229,8 +235,11 @@ const ANDROID_ICON_BY_SF_SYMBOL = {
   macstudio: IconDeviceDesktop,
   magnifyingglass: IconSearch,
   mic: IconMicrophone,
+  "mic.slash": IconMicrophoneOff,
   paintbrush: IconPalette,
   pencil: IconPencil,
+  "phone.fill": IconPhone,
+  "phone.down.fill": IconPhoneOff,
   "person.crop.circle": IconUserCircle,
   "person.2": IconUsers,
   "person.fill.checkmark": IconUserCheck,
@@ -279,6 +288,7 @@ const ANDROID_ICON_BY_SF_SYMBOL = {
   "textformat.size.smaller": IconTextDecrease,
   "tray.and.arrow.up": IconUpload,
   trash: IconTrash,
+  waveform: IconWaveSine,
   wifi: IconWifi,
   "wifi.slash": IconWifiOff,
   xmark: IconX,

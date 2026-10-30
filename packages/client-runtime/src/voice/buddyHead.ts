@@ -42,7 +42,7 @@ const LISTEN_ROLL = MathUtils.degToRad(7);
 const LISTEN_PITCH = MathUtils.degToRad(-4);
 /** Off a call the head sinks a little. */
 const SLEEP_PITCH = MathUtils.degToRad(6);
-/** The snout follows the pointer anywhere in the window, easing out to LOOK_MAX off the line to the viewer. */
+/** The snout follows the pointer, or the rest target, anywhere in the window, easing out to LOOK_MAX off the line to the viewer. */
 const LOOK_MAX = MathUtils.degToRad(42);
 const LOOK_RANGE = 360;
 const LOOK_TILT = MathUtils.degToRad(6);
@@ -74,6 +74,8 @@ export interface BuddyHeadOptions {
   readonly levels: { readonly output: () => number; readonly input: () => number };
   /** The model failed to load or WebGL went away: show the flat icon instead. */
   readonly onUnavailable: () => void;
+  /** Where to look, in client px, while the pointer is away or the user types; null rests ahead. */
+  readonly restTarget?: () => { readonly x: number; readonly y: number } | null;
 }
 
 /** A syllable-like mouth envelope for when the voice level reads zero. */
@@ -309,14 +311,15 @@ export function createBuddyHead(options: BuddyHeadOptions): BuddyHead | null {
     // Look: ease toward the pointer (or back to rest), then layer the sway, nod and moods on top.
     // The head is measured here, once a drawn frame, so a drag or a resize never leaves it stale.
     const ease = smoothing(dt, LOOK_TAU);
+    const target = hasPointer ? { x: pointerX, y: pointerY } : (options.restTarget?.() ?? null);
     let dx = 0;
-    if (hasPointer) {
+    if (target) {
       const rect = canvas.getBoundingClientRect();
-      dx = pointerX - (rect.left + rect.width / 2);
-      aimAt(dx, pointerY - (rect.top + rect.height / 2), lookTarget);
+      dx = target.x - (rect.left + rect.width / 2);
+      aimAt(dx, target.y - (rect.top + rect.height / 2), lookTarget);
     } else lookTarget.identity();
     look.slerp(lookTarget, ease);
-    const tiltTarget = hasPointer ? saturate(dx / LOOK_RANGE) * LOOK_TILT : 0;
+    const tiltTarget = target ? saturate(dx / LOOK_RANGE) * LOOK_TILT : 0;
     tilt += (tiltTarget - tilt) * ease;
 
     if (model) {
@@ -364,10 +367,16 @@ export function createBuddyHead(options: BuddyHeadOptions): BuddyHead | null {
     hasPointer = false;
     scheduler.invalidate();
   };
+  // Typing hands the gaze to the rest target until the pointer moves; it also re-aims as the input grows.
+  const onKeyDown = () => {
+    hasPointer = false;
+    scheduler.invalidate();
+  };
   const onContextLost = () => options.onUnavailable();
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   window.addEventListener("resize", onResize);
   document.documentElement.addEventListener("pointerleave", onPointerLeave);
+  window.addEventListener("keydown", onKeyDown, { passive: true });
   canvas.addEventListener("webglcontextlost", onContextLost);
 
   new GLTFLoader().loadAsync(options.modelUrl).then(
@@ -419,6 +428,7 @@ export function createBuddyHead(options: BuddyHeadOptions): BuddyHead | null {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("resize", onResize);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("keydown", onKeyDown);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       disposeObject(scene);
       renderer.dispose();

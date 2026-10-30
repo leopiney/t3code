@@ -7,10 +7,30 @@ import {
   hostPreviewMimeTypeFromExtension,
   isWorkspaceFontPreviewPath,
   isWorkspaceImagePreviewPath,
+  htmlDocumentPath,
+  isHtmlDocumentPath,
   isWorkspacePreviewEntryPath,
   mediaKindFromPath,
   officePreviewKind,
 } from "./filePreview.ts";
+
+describe("html document paths", () => {
+  it("recognizes html and htm, including a line suffix or fragment", () => {
+    expect(htmlDocumentPath("/tmp/Report.HTML")).toBe("/tmp/Report.HTML");
+    expect(htmlDocumentPath("page.htm")).toBe("page.htm");
+    expect(htmlDocumentPath("/tmp/page.html:12:3")).toBe("/tmp/page.html");
+    expect(htmlDocumentPath("/tmp/page.html?cache=1")).toBe("/tmp/page.html");
+    expect(htmlDocumentPath("/tmp/page.html#L4")).toBe("/tmp/page.html");
+    expect(htmlDocumentPath("C:\\work\\page.html:8")).toBe("C:\\work\\page.html");
+  });
+
+  it("leaves pdf, xhtml, and other files alone", () => {
+    expect(isHtmlDocumentPath("/tmp/page.pdf")).toBe(false);
+    expect(isHtmlDocumentPath("/tmp/page.xhtml")).toBe(false);
+    expect(isHtmlDocumentPath("/tmp/page.html.bak")).toBe(false);
+    expect(htmlDocumentPath("/tmp/notes.ts")).toBeNull();
+  });
+});
 
 describe("workspace file previews", () => {
   it.each([

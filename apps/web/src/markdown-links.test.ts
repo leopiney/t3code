@@ -4,12 +4,29 @@ import {
   resolveInlineCodeFileLinkMeta,
   resolveMarkdownFileLinkMeta,
   rewriteMarkdownFileUriHref,
+  shouldOpenMarkdownFileInSystemBrowser,
 } from "./markdown-links";
 import {
   markdownFileCopyPaths,
   markdownFileEditorTarget,
   resolveMarkdownFileHostPath,
 } from "./markdownFileHostPath";
+
+describe("shouldOpenMarkdownFileInSystemBrowser", () => {
+  it("opens an html file that has no line target", () => {
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/Report.HTML" })).toBe(true);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "notes.htm" })).toBe(true);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.html?v=1" })).toBe(true);
+  });
+
+  it("keeps line targets and other documents out of the system browser", () => {
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.html", line: 12 })).toBe(false);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.html:12" })).toBe(false);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.html#L4" })).toBe(false);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.pdf" })).toBe(false);
+    expect(shouldOpenMarkdownFileInSystemBrowser({ path: "/tmp/page.xhtml" })).toBe(false);
+  });
+});
 
 describe("rewriteMarkdownFileUriHref", () => {
   it("preserves encoded octets so file paths are decoded only once later", () => {

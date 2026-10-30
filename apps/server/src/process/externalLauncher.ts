@@ -13,6 +13,7 @@ import {
   type LaunchEditorInput,
 } from "@t3tools/contracts";
 import { resolveEditorCommand } from "@t3tools/shared/editor";
+import { htmlDocumentPath } from "@t3tools/shared/filePreview";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import {
   isCommandAvailable,
@@ -366,6 +367,173 @@ function resolveWslFileManagerPath(target: string, distroName: string): string {
   return `\\\\wsl.localhost\\${distroName}${relativePath.length > 0 ? `\\${relativePath}` : ""}`;
 }
 
+// `open` / `xdg-open` / Explorer follow the .html association, which is often a code editor.
+// Ask the https handler to open the file instead. The path stays an argument, never script text.
+const DARWIN_HTML_BROWSER_SCRIPT = `use framework "AppKit"
+on run argv
+  set targetPath to item 1 of argv
+  set ws to current application's NSWorkspace's sharedWorkspace()
+  set browserURL to ws's URLForApplicationToOpenURL:(current application's NSURL's URLWithString:"https://example.com")
+  set fileURL to current application's NSURL's fileURLWithPath:targetPath
+  set config to current application's NSWorkspaceOpenConfiguration's configuration()
+  ws's openURLs:{fileURL} withApplicationAtURL:browserURL configuration:config completionHandler:(missing value)
+end run`;
+
+const HTML_DESKTOP_ID_PATTERN = /^[A-Za-z0-9_.@-]+\.desktop$/;
+
+function launchesHtmlOnThisDesktop(env: NodeJS.ProcessEnv): boolean {
+  return env.SSH_CONNECTION === undefined && env.SSH_TTY === undefined;
+}
+
+function buildHtmlBrowserPowerShellSource(targetPath: string): string {
+  const literal = escapePowerShellStringLiteral(targetPath);
+  return [
+    "$ProgressPreference = 'SilentlyContinue'",
+    `$path = ${literal}`,
+    "$uri = ([Uri]::new($path)).AbsoluteUri",
+    "$progId = (Get-ItemProperty -LiteralPath 'Registry::HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice' -ErrorAction SilentlyContinue).ProgId",
+    "$exe = $null",
+    "$arguments = ''",
+    "if ($progId -match '^[A-Za-z0-9][A-Za-z0-9_.-]{0,200}$') {",
+    '  $command = (Get-ItemProperty -LiteralPath ("Registry::HKEY_CLASSES_ROOT\\" + $progId + "\\shell\\open\\command") -ErrorAction SilentlyContinue).\'(default)\'',
+    "  if ($command -match '^\"([^\"]+)\"(?:\\s+(.*))?$' -or $command -match '^(\\S+)(?:\\s+(.*))?$') {",
+    "    $exe = $Matches[1]",
+    "    if ($Matches[2]) { $arguments = $Matches[2].Replace('%1', $uri) } else { $arguments = $uri }",
+    "  }",
+    "}",
+    "if ($exe) {",
+    "  $start = New-Object System.Diagnostics.ProcessStartInfo",
+    "  $start.FileName = $exe",
+    "  $start.Arguments = $arguments",
+    "  $start.UseShellExecute = $true",
+    "  [void][System.Diagnostics.Process]::Start($start)",
+    "} else { Start-Process $uri }",
+  ].join("; ");
+}
+
+const queryDefaultHttpsDesktopId = Effect.fn("externalLauncher.queryDefaultHttpsDesktopId")(
+  function* (): Effect.fn.Return<
+    string | undefined,
+    never,
+    FileSystem.FileSystem | Path.Path | ChildProcessSpawner.ChildProcessSpawner
+  > {
+    const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+    return yield* spawner
+      .spawn(
+        ChildProcess.make("xdg-mime", ["query", "default", "x-scheme-handler/https"], {
+          stdin: "ignore",
+          stderr: "ignore",
+        }),
+      )
+      .pipe(
+        Effect.flatMap((handle) =>
+          Effect.all([handle.stdout.pipe(Stream.decodeText(), Stream.mkString), handle.exitCode], {
+            concurrency: "unbounded",
+          }),
+        ),
+        Effect.map(([stdout, exitCode]) => {
+          const desktopId = stdout.split(/\r?\n/, 1)[0]?.trim() ?? "";
+          return exitCode === 0 && HTML_DESKTOP_ID_PATTERN.test(desktopId) ? desktopId : undefined;
+        }),
+        Effect.scoped,
+        Effect.timeout(LINUX_DIRECTORY_HANDLER_PROBE_TIMEOUT),
+        Effect.orElseSucceed(() => undefined),
+      );
+  },
+);
+
+const resolveHtmlPowerShellCommand = Effect.fn("externalLauncher.resolveHtmlPowerShellCommand")(
+  function* (
+    platform: NodeJS.Platform,
+    env: NodeJS.ProcessEnv,
+  ): Effect.fn.Return<
+    string | undefined,
+    never,
+    FileSystem.FileSystem | Path.Path | ChildProcessSpawner.ChildProcessSpawner
+  > {
+    if (shouldUseWindowsHostFromWsl(platform, env)) {
+      return (yield* isCommandAvailable(WSL_POWERSHELL_COMMAND, { env }))
+        ? WSL_POWERSHELL_COMMAND
+        : undefined;
+    }
+    if (platform !== "win32") return undefined;
+    const absolute = resolvePowerShellPath(env);
+    if (yield* isCommandAvailable(absolute, { env })) return absolute;
+    return (yield* isCommandAvailable("powershell.exe", { env })) ? "powershell.exe" : undefined;
+  },
+);
+
+const resolveHtmlSystemBrowserLaunch = Effect.fn("externalLauncher.resolveHtmlSystemBrowserLaunch")(
+  function* (
+    htmlPath: string,
+    platform: NodeJS.Platform,
+    env: NodeJS.ProcessEnv,
+  ): Effect.fn.Return<
+    EditorLaunch | undefined,
+    never,
+    FileSystem.FileSystem | Path.Path | ChildProcessSpawner.ChildProcessSpawner
+  > {
+    if (!launchesHtmlOnThisDesktop(env)) return undefined;
+
+    if (platform === "darwin") {
+      if (!(yield* isCommandAvailable("osascript", { env }))) return undefined;
+      return {
+        editor: "file-manager",
+        target: htmlPath,
+        command: "osascript",
+        args: ["-e", DARWIN_HTML_BROWSER_SCRIPT, htmlPath],
+      };
+    }
+
+    if (shouldUseWindowsHostFromWsl(platform, env) && env.WSL_DISTRO_NAME?.trim()) {
+      const powershell = yield* resolveHtmlPowerShellCommand(platform, env);
+      if (powershell === undefined) return undefined;
+      const uncPath = resolveWslFileManagerPath(htmlPath, env.WSL_DISTRO_NAME);
+      return {
+        editor: "file-manager",
+        target: htmlPath,
+        command: powershell,
+        args: [
+          ...POWERSHELL_ARGUMENTS_PREFIX,
+          encodeUtf16LeBase64(buildHtmlBrowserPowerShellSource(uncPath)),
+        ],
+      };
+    }
+
+    if (platform === "win32") {
+      const powershell = yield* resolveHtmlPowerShellCommand(platform, env);
+      if (powershell === undefined) return undefined;
+      return {
+        editor: "file-manager",
+        target: htmlPath,
+        command: powershell,
+        args: [
+          ...POWERSHELL_ARGUMENTS_PREFIX,
+          encodeUtf16LeBase64(
+            buildHtmlBrowserPowerShellSource(normalizeWindowsFileManagerPath(htmlPath)),
+          ),
+        ],
+        detached: WINDOWS_POWERSHELL_DETACHED,
+      };
+    }
+
+    if (
+      !(yield* isCommandAvailable("xdg-mime", { env })) ||
+      !(yield* isCommandAvailable("gtk-launch", { env }))
+    ) {
+      return undefined;
+    }
+    const desktopId = yield* queryDefaultHttpsDesktopId();
+    if (desktopId === undefined) return undefined;
+    return {
+      editor: "file-manager",
+      target: htmlPath,
+      command: "gtk-launch",
+      args: [desktopId, htmlPath],
+    };
+  },
+);
+
 function buildBrowserLaunch(
   target: string,
   platform: NodeJS.Platform,
@@ -512,6 +680,12 @@ const resolveEditorLaunch = Effect.fn("resolveEditorLaunch")(function* (
 
   if (input.reveal === true) {
     return yield* resolveFileManagerRevealLaunch(input.cwd, platform, env, command);
+  }
+
+  const htmlPath = htmlDocumentPath(input.cwd);
+  if (htmlPath !== null) {
+    const browserLaunch = yield* resolveHtmlSystemBrowserLaunch(htmlPath, platform, env);
+    if (browserLaunch !== undefined) return browserLaunch;
   }
 
   return {

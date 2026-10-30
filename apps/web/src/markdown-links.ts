@@ -1,3 +1,4 @@
+import { isHtmlDocumentPath } from "@t3tools/shared/filePreview";
 import { fileBasename, isAbsolutePath, workspaceRelativeFilePath } from "@t3tools/shared/path";
 import {
   inlineCodeFilePathCandidate,
@@ -31,6 +32,20 @@ export function shouldOpenMarkdownFileLinkInEditor(
 
 export function shouldOpenMarkdownFileLinkInBrowserByDefault(path: string): boolean {
   return /\.pdf$/i.test(path.split(/[?#]/, 1)[0] ?? "");
+}
+
+/** Plain activation of an HTML file with no line target opens the system browser. */
+export function shouldOpenMarkdownFileInSystemBrowser(input: {
+  readonly path: string;
+  readonly line?: number;
+}): boolean {
+  if (input.line !== undefined) return false;
+  const hashIndex = input.path.indexOf("#");
+  const hash = hashIndex === -1 ? "" : input.path.slice(hashIndex);
+  const withoutHash = hashIndex === -1 ? input.path : input.path.slice(0, hashIndex);
+  const literal = withoutHash.split("?", 1)[0] ?? "";
+  if (splitFilePathPosition(literal, hash).line !== undefined) return false;
+  return isHtmlDocumentPath(input.path);
 }
 
 export function rewriteMarkdownFileUriHref(href: string | undefined): string | null {

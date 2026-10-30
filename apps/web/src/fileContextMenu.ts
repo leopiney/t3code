@@ -14,7 +14,9 @@ import { readLocalApi } from "./localApi";
 import { serverEnvironment } from "./state/server";
 import { shellEnvironment } from "./state/shell";
 import { useAtomCommand } from "./state/use-atom-command";
+import { isHtmlDocumentPath } from "@t3tools/shared/filePreview";
 import { resolvePathLinkTarget } from "@t3tools/shared/fileLinks";
+import { useRemoteOpenResolution } from "./remoteOpen";
 import { toastManager } from "./components/ui/toast";
 import { useAtomValue } from "@effect/atom-react";
 
@@ -56,14 +58,23 @@ export interface FileContextMenuCapabilities {
   readonly editorIds: ReadonlyArray<EditorId>;
 }
 
+export function fileContextMenuOpenLabel(filePath: string, localExec: boolean): string {
+  return localExec && isHtmlDocumentPath(filePath) ? "Open in browser" : "Open";
+}
+
 function buildFileContextMenuItems(input: {
   readonly hasAbsolutePath: boolean;
   readonly capabilities: FileContextMenuCapabilities;
+  readonly openLabel: string;
 }): readonly ContextMenuItem<FileContextMenuAction>[] {
   if (!input.hasAbsolutePath) return [];
   const items: ContextMenuItem<FileContextMenuAction>[] = [];
   if (input.capabilities.canOpenDefault) {
-    items.push({ id: "open", label: "Open", icon: "pencil" });
+    items.push({
+      id: "open",
+      label: input.openLabel,
+      icon: input.openLabel === "Open" ? "pencil" : "globe",
+    });
   }
   if (input.capabilities.revealLabel !== undefined) {
     items.push({
@@ -89,6 +100,12 @@ function buildFileContextMenuItems(input: {
 export function useFileContextMenu(environmentId: EnvironmentId | null) {
   const openInEditor = useAtomCommand(shellEnvironment.openInEditor, { reportFailure: false });
   const serverConfig = useAtomValue(serverEnvironment.configValueAtom(environmentId));
+  const remoteOpen = useRemoteOpenResolution(environmentId);
+  const openLabelFor = (target: FileContextMenuTarget) =>
+    fileContextMenuOpenLabel(
+      resolveFileContextMenuAbsolutePath(target) ?? target.filePath,
+      remoteOpen.isResolved && remoteOpen.state.mode === "local-exec",
+    );
 
   const availableEditors = serverConfig?.availableEditors ?? [];
   const capabilities: FileContextMenuCapabilities = {
@@ -144,6 +161,7 @@ export function useFileContextMenu(environmentId: EnvironmentId | null) {
     const items = buildFileContextMenuItems({
       hasAbsolutePath: resolveFileContextMenuAbsolutePath(target) !== null,
       capabilities,
+      openLabel: openLabelFor(target),
     });
     if (items.length === 0 || api === undefined) return;
     const clicked = await api.contextMenu.show(items, position);
@@ -156,6 +174,7 @@ export function useFileContextMenu(environmentId: EnvironmentId | null) {
       buildFileContextMenuItems({
         hasAbsolutePath: resolveFileContextMenuAbsolutePath(target) !== null,
         capabilities,
+        openLabel: openLabelFor(target),
       }),
     capabilities,
     activate,

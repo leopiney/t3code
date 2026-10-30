@@ -19,7 +19,13 @@ import {
   useRemoteOpenState,
 } from "../../remoteOpen";
 import { useEnvironment } from "../../state/environments";
-import { ChevronDownIcon, FolderClosedIcon, SquareArrowOutUpRightIcon } from "lucide-react";
+import { isHtmlDocumentPath } from "@t3tools/shared/filePreview";
+import {
+  ChevronDownIcon,
+  FolderClosedIcon,
+  GlobeIcon,
+  SquareArrowOutUpRightIcon,
+} from "lucide-react";
 
 import { Group, GroupSeparator } from "../ui/group";
 import {
@@ -241,6 +247,22 @@ export const OpenInPicker = memo(function OpenInPicker({
   // Remote editors run on the viewing machine; only desktop can probe that PATH.
   const effectiveEditors = remote.mode === "local-exec" ? availableEditors : remoteCapableEditors;
   const [preferredEditor, setPreferredEditor] = usePreferredEditor(effectiveEditors);
+  const opensHtmlInSystemBrowser =
+    remote.mode === "local-exec" &&
+    openInCwdIsFile &&
+    openInCwd !== null &&
+    isHtmlDocumentPath(openInCwd) &&
+    effectiveEditors.includes("file-manager");
+
+  const openHtmlInSystemBrowser = async (): Promise<boolean> => {
+    if (!openInCwd || !opensHtmlInSystemBrowser) return false;
+    if (!readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return false;
+    const result = await openInEditorMutation({
+      environmentId,
+      input: { cwd: openInCwd, editor: "file-manager" },
+    });
+    return result._tag === "Success";
+  };
 
   const openInEditor = async (editorId: EditorId | null): Promise<boolean> => {
     if (!openInCwd) return false;
@@ -284,7 +306,11 @@ export const OpenInPicker = memo(function OpenInPicker({
   const backgroundThread = use(BackgroundThreadContext);
   const options = resolveOpenInOptions(navigator.platform, effectiveEditors);
   const primaryOption = options.find(({ value }) => value === preferredEditor) ?? null;
-  const primaryLabel = isPanel ? `Open in ${primaryOption?.label ?? "editor"}` : "Open";
+  const primaryLabel = opensHtmlInSystemBrowser
+    ? "Open in system browser"
+    : isPanel
+      ? `Open in ${primaryOption?.label ?? "editor"}`
+      : "Open";
 
   const editorItems = (
     <>
@@ -305,7 +331,7 @@ export const OpenInPicker = memo(function OpenInPicker({
               disabled={!openInCwd || !canOpenEditor}
               key={value}
               onClick={() => {
-                if (presentation === "menu") {
+                if (presentation === "menu" || opensHtmlInSystemBrowser) {
                   void openInEditor(value);
                 } else {
                   setPreferredEditor(value);
@@ -314,9 +340,11 @@ export const OpenInPicker = memo(function OpenInPicker({
             >
               <Icon aria-hidden="true" className={getOpenInIconClass(kind)} />
               <MenuItemLabel>{label}</MenuItemLabel>
-              {value === preferredEditor && openFavoriteEditorShortcutLabel && (
-                <MenuShortcut>{openFavoriteEditorShortcutLabel}</MenuShortcut>
-              )}
+              {value === preferredEditor &&
+                openFavoriteEditorShortcutLabel &&
+                !opensHtmlInSystemBrowser && (
+                  <MenuShortcut>{openFavoriteEditorShortcutLabel}</MenuShortcut>
+                )}
             </MenuItem>
           ))}
           {remote.mode === "remote-links" && !remoteHintSeen && (
@@ -358,21 +386,37 @@ export const OpenInPicker = memo(function OpenInPicker({
 
   return (
     <ActionGroup
-      aria-label="Open in editor"
+      aria-label={opensHtmlInSystemBrowser ? "Open in system browser" : "Open in editor"}
       role="group"
       {...(isPanel
         ? { className: THREAD_DETAILS_PANEL_SPLIT_GROUP_CLASS, ref: panelAnchorRef }
         : {})}
     >
       <ThreadDetailsControl
-        aria-label={compact ? "Open file in preferred editor" : primaryLabel}
+        aria-label={
+          opensHtmlInSystemBrowser
+            ? "Open in system browser"
+            : compact
+              ? "Open file in preferred editor"
+              : primaryLabel
+        }
         size={isPanel ? "sm" : "xs"}
         variant={isPanel ? "ghost" : "outline"}
         part="primary"
         panel={isPanel}
-        disabled={!preferredEditor || !openInCwd || !canOpenEditor}
+        disabled={
+          opensHtmlInSystemBrowser
+            ? !openInCwd || !canOpenEditor
+            : !preferredEditor || !openInCwd || !canOpenEditor
+        }
         {...(enableShortcut && !backgroundThread ? { [OPEN_FAVORITE_EDITOR_ATTRIBUTE]: "" } : {})}
         onClick={() => {
+          if (opensHtmlInSystemBrowser) {
+            void openHtmlInSystemBrowser().then((opened) => {
+              if (opened) announce("Opened in the system browser");
+            });
+            return;
+          }
           if (!preferredEditor) return;
           const label = editorLabelForPlatform(preferredEditor, navigator.platform);
           void openInEditor(preferredEditor).then((opened) => {
@@ -380,7 +424,15 @@ export const OpenInPicker = memo(function OpenInPicker({
           });
         }}
       >
-        {primaryOption?.Icon ? (
+        {opensHtmlInSystemBrowser ? (
+          <GlobeIcon
+            aria-hidden="true"
+            className={cn(
+              isPanel ? THREAD_DETAILS_PANEL_ICON_CLASS : "size-3.5",
+              "text-foreground opacity-100",
+            )}
+          />
+        ) : primaryOption?.Icon ? (
           <primaryOption.Icon
             aria-hidden="true"
             className={cn(

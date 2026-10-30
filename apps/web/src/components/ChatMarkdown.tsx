@@ -1,4 +1,5 @@
 import { clientHostEnvironmentAtom } from "../state/clientHostEnvironment";
+import { isHtmlDocumentPath } from "@t3tools/shared/filePreview";
 import { buildFileLinkParentSuffixByPath, fileLinkLabel } from "@t3tools/shared/fileLinks";
 import {
   isWindowsDrivePathHref,
@@ -906,6 +907,21 @@ function useChatMarkdownState({
           isPreviewAvailableFor(threadRef.environmentId) &&
           isBrowserPreviewFile(fileLinkMeta.filePath)
             ? () => openMarkdownFileInPreview(fileLinkMeta.filePath)
+            : undefined
+        }
+        onOpenInSystemBrowser={
+          canUseShellActions &&
+          environmentId !== null &&
+          availableEditors.includes("file-manager") &&
+          fileLinkMeta.line === undefined &&
+          isHtmlDocumentPath(fileLinkMeta.filePath)
+            ? async () => {
+                const hostPath = (await resolveHostPath()).absolutePath;
+                return openInEditor({
+                  environmentId,
+                  input: { cwd: hostPath, editor: "file-manager" },
+                });
+              }
             : undefined
         }
       />

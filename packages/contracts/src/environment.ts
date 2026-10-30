@@ -153,6 +153,9 @@ export const ExecutionEnvironmentCapabilities = Schema.Struct({
   linkFence: Schema.optionalKey(Schema.Boolean),
   /** Server answers server.prepareTriage. */
   triage: Schema.optionalKey(Schema.Boolean),
+  /** Server answers voice.createCallToken and voice.syncAgent and keeps `voiceAgent`
+      settings. Older servers silently drop the ElevenLabs key patch. */
+  voiceAgent: Schema.optionalKey(Schema.Boolean),
 });
 export type ExecutionEnvironmentCapabilities = typeof ExecutionEnvironmentCapabilities.Type;
 

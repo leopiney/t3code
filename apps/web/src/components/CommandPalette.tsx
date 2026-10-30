@@ -68,6 +68,8 @@ import {
   RotateCcwIcon,
   SettingsIcon,
   MonitorIcon,
+  PhoneIcon,
+  PhoneOffIcon,
   SquarePenIcon,
   TextSearchIcon,
   UserPlusIcon,
@@ -100,6 +102,12 @@ import {
   promptLinkRepositoryOf,
 } from "./promptLinks/copyPromptLink";
 import { useClientSettings } from "../hooks/useSettings";
+import {
+  selectWolfBudEnabled,
+  toggleWolfBudCall,
+  useWolfBudCallActive,
+  useWolfBudCallReady,
+} from "./voice/wolfBudCall";
 import { useStableCallback } from "../hooks/useStableCallback";
 import { readLocalApi } from "../localApi";
 import { desktopLocalBackendId } from "../connection/desktopLocal";
@@ -404,6 +412,9 @@ function OpenCommandPaletteDialog(props: {
     setHighlightedItemValue(null);
   }
   const clientSettings = useClientSettings(selectCommandPaletteClientSettings);
+  const wolfBudEnabled = useClientSettings(selectWolfBudEnabled);
+  const wolfBudCallActive = useWolfBudCallActive();
+  const wolfBudCallReady = useWolfBudCallReady(wolfBudEnabled);
   const createProject = useAtomCommand(projectEnvironment.create, {
     reportFailure: false,
   });
@@ -1504,6 +1515,24 @@ function OpenCommandPaletteDialog(props: {
       await navigate({ to: "/usage" });
     },
   });
+
+  if (wolfBudEnabled && (wolfBudCallActive || wolfBudCallReady)) {
+    actionItems.push({
+      kind: "action",
+      value: "action:wolfbud-call",
+      searchTerms: ["wolfbud", "voice", "call", "talk", "hang up", "agent", "elevenlabs"],
+      title: wolfBudCallActive ? "End WolfBud call" : "Call WolfBud",
+      icon: wolfBudCallActive ? (
+        <PhoneOffIcon className={ITEM_ICON_CLASS} />
+      ) : (
+        <PhoneIcon className={ITEM_ICON_CLASS} />
+      ),
+      shortcutCommand: "voice.toggleCall",
+      run: async () => {
+        toggleWolfBudCall();
+      },
+    });
+  }
 
   for (const direction of [1, -1] as const) {
     const title = direction === 1 ? "Focus Next Workspace Area" : "Focus Previous Workspace Area";

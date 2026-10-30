@@ -22,7 +22,7 @@ import { CompactVoiceWaveform, DictationElapsedTime } from "./ComposerDictationC
 import { useGlobalVoiceInput } from "./VoiceInputProvider";
 import { resolveVoiceComposerPresentation } from "./voiceInputPresentation";
 
-const PILL_HEIGHT = 36;
+export const DICTATION_PILL_HEIGHT = 36;
 const COLLAPSED_WIDTH = 64;
 const EXPANDED_MAX_WIDTH = 280;
 const IOS_BOTTOM_CHROME_CLEARANCE = 64;
@@ -32,6 +32,15 @@ const MORPH_TIMING = {
   reduceMotion: ReduceMotion.System,
 } as const;
 const ENTERING = FadeIn.duration(180).reduceMotion(ReduceMotion.System);
+
+/** The bottom offset of controls docked at the screen's right edge, clear of the bottom chrome. */
+export function useEdgeControlBottom(): number {
+  const insets = useSafeAreaInsets();
+  const { fabSize } = useAndroidControlSizing();
+  return Platform.OS === "android"
+    ? Math.max(insets.bottom, 16) + 16 + fabSize + 12
+    : Math.max(insets.bottom, 12) + IOS_BOTTOM_CHROME_CLEARANCE;
+}
 
 export function GlobalVoiceInputControl(props: { readonly children: ReactNode }) {
   const voice = useGlobalVoiceInput();
@@ -68,7 +77,7 @@ function EdgeDictationPill(props: {
   const voice = useGlobalVoiceInput();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { fabSize } = useAndroidControlSizing();
+  const bottom = useEdgeControlBottom();
   const { expanded, onExpandedChange: setExpanded } = props;
   const progress = useDerivedValue(() => withTiming(expanded ? 1 : 0, MORPH_TIMING));
 
@@ -83,11 +92,6 @@ function EdgeDictationPill(props: {
     opacity: interpolate(progress.value, [0.3, 1], [0, 1], Extrapolation.CLAMP),
   }));
 
-  const bottom =
-    Platform.OS === "android"
-      ? Math.max(insets.bottom, 16) + 16 + fabSize + 12
-      : Math.max(insets.bottom, 12) + IOS_BOTTOM_CHROME_CLEARANCE;
-
   const presentation = resolveVoiceComposerPresentation(voice.state, voice.elapsedSeconds);
   const phase = voice.state.phase;
   const isError = phase === "error";
@@ -99,7 +103,7 @@ function EdgeDictationPill(props: {
       <Animated.View
         entering={ENTERING}
         className="absolute rounded-l-full border border-r-0 border-border bg-card shadow-md shadow-black/10"
-        style={[{ bottom, right: insets.right, height: PILL_HEIGHT }, pillStyle]}
+        style={[{ bottom, right: insets.right, height: DICTATION_PILL_HEIGHT }, pillStyle]}
       >
         <View className="flex-1 overflow-hidden rounded-l-full">
           <Animated.View

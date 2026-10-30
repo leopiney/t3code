@@ -131,6 +131,34 @@
       "types": "./src/voice-input/index.ts",
       "default": "./src/voice-input/index.ts"
     },
+    "./voice/types": {
+      "types": "./src/voice/types.ts",
+      "default": "./src/voice/types.ts"
+    },
+    "./voice/context": {
+      "types": "./src/voice/context.ts",
+      "default": "./src/voice/context.ts"
+    },
+    "./voice/announcements": {
+      "types": "./src/voice/announcements.ts",
+      "default": "./src/voice/announcements.ts"
+    },
+    "./voice/tools": {
+      "types": "./src/voice/tools.ts",
+      "default": "./src/voice/tools.ts"
+    },
+    "./voice/session": {
+      "types": "./src/voice/session.ts",
+      "default": "./src/voice/session.ts"
+    },
+    "./voice/host": {
+      "types": "./src/voice/host.ts",
+      "default": "./src/voice/host.ts"
+    },
+    "./voice/wolf-head": {
+      "types": "./src/voice/wolfHead.ts",
+      "default": "./src/voice/wolfHead.ts"
+    },
     "./t3ToolSummary": {
       "types": "./src/t3ToolSummary.ts",
       "default": "./src/t3ToolSummary.ts"
@@ -358,6 +386,14 @@
     "./state/thread-settled": {
       "types": "./src/state/threadSettled.ts",
       "default": "./src/state/threadSettled.ts"
+    },
+    "./state/thread-status": {
+      "types": "./src/state/threadStatus.ts",
+      "default": "./src/state/threadStatus.ts"
+    },
+    "./state/thread-notification-gate": {
+      "types": "./src/state/threadNotificationGate.ts",
+      "default": "./src/state/threadNotificationGate.ts"
     },
     "./state/thread-search": {
       "types": "./src/state/threadSearch.ts",

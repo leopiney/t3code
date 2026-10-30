@@ -118,6 +118,9 @@ const iosBundleIdentifier = isIosPersonalTeamBuild
   ? personalTeamBundleIdentifier!
   : variant.iosBundleIdentifier;
 
+const MICROPHONE_PERMISSION = "Allow T3 Code to use your microphone for voice input.";
+const CAMERA_PERMISSION = "Allow T3 Code to access your camera so you can scan pairing QR codes.";
+
 const dmSansFonts = {
   regular: "@expo-google-fonts/dm-sans/400Regular/DMSans_400Regular.ttf",
   medium: "@expo-google-fonts/dm-sans/500Medium/DMSans_500Medium.ttf",
@@ -298,8 +301,12 @@ const config: ExpoConfig = {
     },
     // JS back dispatch needs RN's Android 16 shim and withAndroidPredictiveBackCompat on Android 13-15.
     predictiveBackGestureEnabled: true,
-    // expo-sensors declares this for its pedometer, which the app does not use.
-    blockedPermissions: ["android.permission.ACTIVITY_RECOGNITION"],
+    // expo-sensors declares this for its pedometer, and the WebRTC plugin the overlay permission
+    // that screen sharing needs; the app uses neither.
+    blockedPermissions: [
+      "android.permission.ACTIVITY_RECOGNITION",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+    ],
   },
   web: {
     favicon: variant.assets.appIcon,
@@ -364,7 +371,7 @@ const config: ExpoConfig = {
     [
       "expo-audio",
       {
-        microphonePermission: "Allow T3 Code to use your microphone for voice input.",
+        microphonePermission: MICROPHONE_PERMISSION,
         recordAudioAndroid: false,
         enableBackgroundPlayback: false,
         enableBackgroundRecording: false,
@@ -373,13 +380,20 @@ const config: ExpoConfig = {
     [
       "expo-camera",
       {
-        cameraPermission: "Allow T3 Code to access your camera so you can scan pairing QR codes.",
+        cameraPermission: CAMERA_PERMISSION,
         microphonePermission: false,
         barcodeScannerEnabled: true,
         recordAudioAndroid: false,
       },
     ],
     ["expo-image-picker", { photosPermission: false, microphonePermission: false }],
+    // WolfBud's voice calls (@elevenlabs/react-native) run over LiveKit WebRTC. The WebRTC
+    // plugin adds Android's RECORD_AUDIO; pass the texts so its iOS defaults never win.
+    "@livekit/react-native-expo-plugin",
+    [
+      "@config-plugins/react-native-webrtc",
+      { cameraPermission: CAMERA_PERMISSION, microphonePermission: MICROPHONE_PERMISSION },
+    ],
     [
       "expo-splash-screen",
       {

@@ -66,6 +66,10 @@ export const CLIENT_GUARDED_RPC_SCOPES = {
   [WS_METHODS.peerLinksUnlink]: AuthAccessWriteScope,
   // A link lets every agent here reach the other environment: Settings' bar.
   [WS_METHODS.peerLinksAnswerRequest]: AuthAccessWriteScope,
+  // A call spends this environment's ElevenLabs key on an agent that acts on threads.
+  [WS_METHODS.voiceCreateCallToken]: AuthOrchestrationOperateScope,
+  // Setting up the agent writes to the ElevenLabs account in this environment's settings.
+  [WS_METHODS.voiceSyncAgent]: AuthSettingsWriteScope,
 } as const;
 export type ClientGuardedRpcTag = keyof typeof CLIENT_GUARDED_RPC_SCOPES;
 

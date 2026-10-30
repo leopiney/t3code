@@ -185,6 +185,7 @@ import * as CursorKeychain from "@t3tools/provider-cursor/server/CursorKeychain"
 import * as CursorUsageAccounts from "@t3tools/provider-cursor/server/CursorUsageAccounts";
 import * as UsageService from "./usage/UsageService.ts";
 import * as CodexUsageHistory from "./usage/CodexUsageHistory.ts";
+import * as VoiceAgentService from "./voice/VoiceAgentService.ts";
 import * as RuntimeLayer from "./orchestration-v2/runtimeLayer.ts";
 import * as ProjectStore from "./orchestration-v2/ProjectStore.ts";
 import * as ThreadSearch from "./orchestration-v2/ThreadSearch.ts";
@@ -285,6 +286,8 @@ const layerUsage = UsageService.layer.pipe(
   ),
   Layer.provide(layerServerSettings),
 );
+
+const layerVoiceAgent = VoiceAgentService.layer.pipe(Layer.provide(layerServerSettings));
 
 const layerResourceDiagnostics = Layer.mergeAll(
   HostResources.layer,
@@ -695,6 +698,7 @@ const layerRuntimeCoreDependencies = layerRuntimeCoreDependenciesBase.pipe(
 
 const layerRuntimeDependencies = layerRuntimeCoreDependencies.pipe(
   Layer.provideMerge(layerUsage),
+  Layer.provideMerge(layerVoiceAgent),
   Layer.provideMerge(layerBackground),
   Layer.provideMerge(layerResourceDiagnostics),
   Layer.provideMerge(TraceDiagnostics.layer),

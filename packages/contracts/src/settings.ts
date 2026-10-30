@@ -48,6 +48,7 @@ import {
   ProviderDriverKind,
 } from "./providerInstance.ts";
 import { PullRequestMergeMethod } from "./pullRequest.ts";
+import { VoiceAgentSpeakMode } from "./voice.ts";
 
 export const TimestampFormat = Schema.Literals(["locale", "12-hour", "24-hour"]);
 export type TimestampFormat = typeof TimestampFormat.Type;
@@ -521,6 +522,10 @@ export const ClientSettingsSchema = Schema.Struct({
   // Opt-in TeX typesetting in rendered Markdown. Off keeps math parsing and
   // KaTeX out of the render path entirely.
   mathRenderingEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  wolfBudEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  wolfBudSpeaks: VoiceAgentSpeakMode.pipe(
+    Schema.withDecodingDefault(Effect.succeed("all" as const)),
+  ),
 });
 export type ClientSettings = typeof ClientSettingsSchema.Type;
 
@@ -849,6 +854,16 @@ export const AntigravitySettings = makeProviderSettingsSchema(
   { order: ["authMethod", "apiKey", "gcpProject", "gcpLocation", "binaryPath"] },
 );
 export type AntigravitySettings = typeof AntigravitySettings.Type;
+
+export const VoiceAgentSettings = Schema.Struct({
+  elevenLabsApiKey: TrimmedString.pipe(
+    secretSetting,
+    Schema.withDecodingDefault(Effect.succeed("")),
+  ),
+  /** An agent used as it is, never synced. Empty: the server sets one up from its definition. */
+  agentIdOverride: TrimmedString.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
+});
+export type VoiceAgentSettings = typeof VoiceAgentSettings.Type;
 
 export const UsageLimitSourceConfig = Schema.Struct({
   kind: Schema.Literal("cliproxy"),
@@ -1408,6 +1423,7 @@ export const ServerSettings = Schema.Struct({
   usageModelAliases: Schema.Record(TrimmedNonEmptyString, TrimmedNonEmptyString).pipe(
     Schema.withDecodingDefault(Effect.succeed({})),
   ),
+  voiceAgent: VoiceAgentSettings.pipe(Schema.withDecodingDefault(Effect.succeed({}))),
 });
 export type ServerSettings = typeof ServerSettings.Type;
 
@@ -1724,6 +1740,13 @@ export const ServerSettingsPatch = Schema.Struct({
   usageModelAliases: Schema.optionalKey(
     Schema.Record(TrimmedNonEmptyString, Schema.NullOr(TrimmedNonEmptyString)),
   ),
+  /** An omitted key or the redaction marker keeps the stored key; an empty one removes it. */
+  voiceAgent: Schema.optionalKey(
+    Schema.Struct({
+      elevenLabsApiKey: Schema.optionalKey(TrimmedString),
+      agentIdOverride: Schema.optionalKey(TrimmedString),
+    }),
+  ),
 });
 export type ServerSettingsPatch = typeof ServerSettingsPatch.Type;
 
@@ -1841,5 +1864,7 @@ export const ClientSettingsPatch = Schema.Struct({
   snapShotAnimations: Schema.optionalKey(Schema.Boolean),
   wordWrap: Schema.optionalKey(Schema.Boolean),
   mathRenderingEnabled: Schema.optionalKey(Schema.Boolean),
+  wolfBudEnabled: Schema.optionalKey(Schema.Boolean),
+  wolfBudSpeaks: Schema.optionalKey(VoiceAgentSpeakMode),
 });
 export type ClientSettingsPatch = typeof ClientSettingsPatch.Type;

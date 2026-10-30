@@ -1,7 +1,8 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { VoiceSession } from "@t3tools/client-runtime/voice/session";
+import type { T3BudAnimal } from "@t3tools/contracts";
 import type { VoiceFeedEntry, VoiceSessionState } from "@t3tools/client-runtime/voice/types";
-import type { WolfHead, WolfMood } from "@t3tools/client-runtime/voice/wolf-head";
+import type { BuddyHead, BuddyMood } from "@t3tools/client-runtime/voice/buddy-head";
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import * as Schema from "effect/Schema";
 import {
@@ -36,17 +37,17 @@ import { Button, InlineButton } from "../ui/button";
 import { Kbd } from "../ui/kbd";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { createWebVoiceSession } from "./webVoiceSession";
-import { attachWolfBudSession, selectWolfBudSpeaks } from "./wolfBudCall";
+import { attachT3BudSession, selectT3BudAnimal, selectT3BudSpeaks } from "./t3BudCall";
 
 const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-const WOLF_MODEL_URL = `${ASSET_BASE}/wolf-head.glb`;
-const WOLF_ICON_URL = `${ASSET_BASE}/wolf-icon.png`;
-/** The wolf's drawing size in CSS px; its button adds the ring around it. */
-const WOLF_SIZE = 56;
-const WOLF_BUTTON_SIZE = 64;
+const modelUrl = (animal: T3BudAnimal) => `${ASSET_BASE}/t3bud/${animal}.glb`;
+const iconUrl = (animal: T3BudAnimal) => `${ASSET_BASE}/t3bud/${animal}.png`;
+/** The head's drawing size in CSS px; its button adds the ring around it. */
+const BUDDY_SIZE = 56;
+const BUDDY_BUTTON_SIZE = 64;
 const DRAG_SLOP = 4;
 const FEED_SHOWN = 4;
-/** The card's `w-72` and `24rem` cap, its gap from the wolf, and the margin it keeps from the window's edge. */
+/** The card's `w-72` and `24rem` cap, its gap from T3Bud, and the margin it keeps from the window's edge. */
 const CARD_WIDTH = 288;
 const CARD_MAX_HEIGHT = 384;
 const CARD_GAP = 8;
@@ -58,23 +59,23 @@ const WidgetLayout = Schema.Struct({
   open: Schema.Boolean,
 });
 type WidgetLayout = typeof WidgetLayout.Type;
-const WIDGET_LAYOUT_STORAGE_KEY = "t3code:wolfbud-widget:v1";
+const WIDGET_LAYOUT_STORAGE_KEY = "t3code:t3bud-widget:v1";
 // Clear of the composer and its send button on most layouts; the user can drag it anywhere.
 const DEFAULT_WIDGET_LAYOUT: WidgetLayout = { right: 20, bottom: 128, open: true };
-const loadWolfHead = () => import("@t3tools/client-runtime/voice/wolf-head");
+const loadBuddyHead = () => import("@t3tools/client-runtime/voice/buddy-head");
 
-export function WolfBud() {
+export function T3Bud() {
   const router = useRouter();
   const [{ session, connect }] = useState(() => createWebVoiceSession(router));
-  const speakMode = useClientSettings(selectWolfBudSpeaks);
+  const speakMode = useClientSettings(selectT3BudSpeaks);
   const routeTarget = resolveThreadRouteTarget(useParams({ strict: false }));
   const openThread = routeTarget?.kind === "server" ? routeTarget.threadRef : null;
   const state = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- feeds the voice session the thread list and hands it to the palette and shortcut while the wolf is shown
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- feeds the voice session the thread list and hands it to the palette and shortcut while T3Bud is shown
   useEffect(() => {
     const disconnect = connect();
-    const detach = attachWolfBudSession(session);
+    const detach = attachT3BudSession(session);
     return () => {
       detach();
       disconnect();
@@ -92,10 +93,10 @@ export function WolfBud() {
     session.setSpeakMode(speakMode);
   }, [session, speakMode]);
 
-  return <WolfBudWidget session={session} state={state} />;
+  return <T3BudWidget session={session} state={state} />;
 }
 
-function wolfMood(state: VoiceSessionState): WolfMood {
+function buddyMood(state: VoiceSessionState): BuddyMood {
   if (state.status === "connecting") return "awake";
   if (state.status !== "live") return "asleep";
   if (state.mode === "speaking") return "speaking";
@@ -144,9 +145,9 @@ function subscribeResize(listener: () => void): () => void {
 const readViewportWidth = () => window.innerWidth;
 const readViewportHeight = () => window.innerHeight;
 
-/** Where the wolf is drawn: a spot saved in a larger window still keeps it on screen. */
+/** Where T3Bud is drawn: a spot saved in a larger window still keeps it on screen. */
 function clampOffset(offset: number, viewport: number): number {
-  return Math.max(0, Math.min(offset, viewport - WOLF_BUTTON_SIZE));
+  return Math.max(0, Math.min(offset, viewport - BUDDY_BUTTON_SIZE));
 }
 
 const CALL_BLOCKED_REASON: Record<Exclude<VoiceCallReadiness, "ready">, string> = {
@@ -155,10 +156,11 @@ const CALL_BLOCKED_REASON: Record<Exclude<VoiceCallReadiness, "ready">, string> 
     "This device lacks access to start calls on the environments that keep an ElevenLabs key.",
 };
 
-function WolfBudWidget({ session, state }: { session: VoiceSession; state: VoiceSessionState }) {
+function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSessionState }) {
   const navigate = useNavigate();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const callShortcut = shortcutLabelForCommand(keybindings, "voice.toggleCall");
+  const animal = useClientSettings(selectT3BudAnimal);
   // Mounted here so the permission reads stay warm for the palette, the shortcut and the call.
   const readiness = useAtomValue(voiceCallReadinessAtom);
   const viewportWidth = useSyncExternalStore(subscribeResize, readViewportWidth);
@@ -178,7 +180,7 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
     moved: boolean;
   } | null>(null);
   const draggedRef = useRef(false);
-  const headRef = useRef<WolfHead | null>(null);
+  const headRef = useRef<BuddyHead | null>(null);
   const stored = dragPosition ?? layout;
   const right = clampOffset(stored.right, viewportWidth);
   const bottom = clampOffset(stored.bottom, viewportHeight);
@@ -188,17 +190,17 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
     .target.label;
   const feed = state.feed.slice(-FEED_SHOWN);
 
-  // The card opens toward the roomier half and never past an edge, wherever the wolf sits.
-  const wolfTop = viewportHeight - bottom - WOLF_BUTTON_SIZE;
-  const wolfLeft = viewportWidth - right - WOLF_BUTTON_SIZE;
-  const cardBelow = wolfTop + WOLF_BUTTON_SIZE / 2 < viewportHeight / 2;
+  // The card opens toward the roomier half and never past an edge, wherever T3Bud sits.
+  const buddyTop = viewportHeight - bottom - BUDDY_BUTTON_SIZE;
+  const buddyLeft = viewportWidth - right - BUDDY_BUTTON_SIZE;
+  const cardBelow = buddyTop + BUDDY_BUTTON_SIZE / 2 < viewportHeight / 2;
   const cardLeft = Math.max(
     0,
-    Math.min(wolfLeft + WOLF_BUTTON_SIZE - CARD_WIDTH, viewportWidth - CARD_WIDTH),
+    Math.min(buddyLeft + BUDDY_BUTTON_SIZE - CARD_WIDTH, viewportWidth - CARD_WIDTH),
   );
   const cardRoom = cardBelow
-    ? viewportHeight - wolfTop - WOLF_BUTTON_SIZE - CARD_GAP - CARD_EDGE
-    : wolfTop - CARD_GAP - CARD_EDGE;
+    ? viewportHeight - buddyTop - BUDDY_BUTTON_SIZE - CARD_GAP - CARD_EDGE
+    : buddyTop - CARD_GAP - CARD_EDGE;
 
   const dragTo = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const start = dragRef.current;
@@ -217,18 +219,18 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
     <div className="pointer-events-none fixed z-40 size-16" style={{ right, bottom }}>
       {layout.open ? (
         <section
-          aria-label="WolfBud"
+          aria-label="T3Bud"
           className="pointer-events-auto absolute flex w-72 flex-col gap-2 overflow-y-auto rounded-xl border bg-popover p-3 text-popover-foreground shadow-lg [-webkit-app-region:no-drag]"
           style={{
-            left: cardLeft - wolfLeft,
+            left: cardLeft - buddyLeft,
             ...(cardBelow
-              ? { top: WOLF_BUTTON_SIZE + CARD_GAP }
-              : { bottom: WOLF_BUTTON_SIZE + CARD_GAP }),
+              ? { top: BUDDY_BUTTON_SIZE + CARD_GAP }
+              : { bottom: BUDDY_BUTTON_SIZE + CARD_GAP }),
             maxHeight: Math.max(0, Math.min(CARD_MAX_HEIGHT, cardRoom)),
           }}
         >
           <header className="flex items-center gap-2">
-            <h2 className="text-sm font-medium">WolfBud</h2>
+            <h2 className="text-sm font-medium">T3Bud</h2>
             <p className="min-w-0 truncate text-xs text-muted-foreground">
               {statusLine(state)}
               {via ? ` · via ${via}` : null}
@@ -237,7 +239,7 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
               size="icon-xs"
               variant="ghost-muted"
               className="ms-auto"
-              aria-label="Hide WolfBud's card"
+              aria-label="Hide T3Bud's card"
               onClick={() => setLayout((current) => ({ ...current, open: false }))}
             >
               <ChevronDownIcon />
@@ -317,7 +319,7 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
             ) : (
               <Button size="xs" disabled={callBlocked} onClick={() => void session.start()}>
                 <PhoneIcon />
-                Call WolfBud
+                Call T3Bud
               </Button>
             )}
             <Button
@@ -340,9 +342,9 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
           render={
             <button
               type="button"
-              aria-label={layout.open ? "Pet WolfBud" : "Show WolfBud's card"}
+              aria-label={layout.open ? "Pet T3Bud" : "Show T3Bud's card"}
               className={cn(
-                "pointer-events-auto relative flex size-16 touch-none items-center justify-center rounded-full border-2 bg-wolfbud shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [-webkit-app-region:no-drag]",
+                "pointer-events-auto relative flex size-16 touch-none items-center justify-center rounded-full border-2 bg-t3bud shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [-webkit-app-region:no-drag]",
                 RING_CLASS[state.status],
               )}
               onPointerDown={(event) => {
@@ -386,7 +388,13 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
             />
           }
         >
-          <WolfAvatar session={session} mood={wolfMood(state)} headRef={headRef} />
+          <BuddyAvatar
+            key={animal}
+            animal={animal}
+            session={session}
+            mood={buddyMood(state)}
+            headRef={headRef}
+          />
           {state.waiting > 0 ? (
             <Badge size="sm" className="absolute -top-1 -left-1">
               {state.waiting}
@@ -394,21 +402,23 @@ function WolfBudWidget({ session, state }: { session: VoiceSession; state: Voice
           ) : null}
         </TooltipTrigger>
         <TooltipPopup side="left">
-          {onCall ? statusLine(state) : "WolfBud. Drag to move."}
+          {onCall ? statusLine(state) : "T3Bud. Drag to move."}
         </TooltipPopup>
       </Tooltip>
     </div>
   );
 }
 
-function WolfAvatar({
+function BuddyAvatar({
+  animal,
   session,
   mood,
   headRef,
 }: {
+  animal: T3BudAnimal;
   session: VoiceSession;
-  mood: WolfMood;
-  headRef: { current: WolfHead | null };
+  mood: BuddyMood;
+  headRef: { current: BuddyHead | null };
 }) {
   const [flat, setFlat] = useState(false);
   const moodRef = useRef(mood);
@@ -422,14 +432,14 @@ function WolfAvatar({
   // The head lives as long as its canvas; three.js loads with the first one.
   const mountHead = (canvas: HTMLCanvasElement | null) => {
     if (canvas === null) return;
-    let head: WolfHead | null = null;
+    let head: BuddyHead | null = null;
     let unmounted = false;
-    void loadWolfHead().then(
-      ({ createWolfHead }) => {
+    void loadBuddyHead().then(
+      ({ createBuddyHead }) => {
         if (unmounted) return;
-        head = createWolfHead({
+        head = createBuddyHead({
           canvas,
-          modelUrl: WOLF_MODEL_URL,
+          modelUrl: modelUrl(animal),
           levels: { output: () => session.outputLevel(), input: () => session.inputLevel() },
           onUnavailable: () => setFlat(true),
         });
@@ -437,7 +447,7 @@ function WolfAvatar({
           setFlat(true);
           return;
         }
-        head.resize(WOLF_SIZE, window.devicePixelRatio || 1);
+        head.resize(BUDDY_SIZE, window.devicePixelRatio || 1);
         head.setMood(moodRef.current);
         headRef.current = head;
       },
@@ -452,12 +462,12 @@ function WolfAvatar({
 
   return flat ? (
     <img
-      src={WOLF_ICON_URL}
+      src={iconUrl(animal)}
       alt=""
       draggable={false}
       className="size-14 rounded-full"
-      width={WOLF_SIZE}
-      height={WOLF_SIZE}
+      width={BUDDY_SIZE}
+      height={BUDDY_SIZE}
     />
   ) : (
     <canvas ref={mountHead} aria-hidden className="size-14" />

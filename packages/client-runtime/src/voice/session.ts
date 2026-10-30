@@ -86,7 +86,7 @@ const systemVoiceClock: VoiceClock = {
 
 const isVoiceAgentError = Schema.is(VoiceAgentError);
 
-/** What the wolf says when a call cannot start. */
+/** What T3Bud says when a call cannot start. */
 function voiceCallErrorMessage(error: unknown): string {
   if (isVoiceAgentError(error)) {
     switch (error.reason) {
@@ -251,11 +251,14 @@ export class VoiceSession {
     try {
       await this.options.transport.start({
         conversationToken: token.token,
-        dynamicVariables: voiceDynamicVariables(rows, {
-          handles: call.handles,
-          openKey: this.openKey,
-          projects: this.projectNames(),
-        }),
+        dynamicVariables: {
+          ...voiceDynamicVariables(rows, {
+            handles: call.handles,
+            openKey: this.openKey,
+            projects: this.projectNames(),
+          }),
+          animal: this.options.animal?.() ?? "wolf",
+        },
         clientTools: this.tools(call),
         callbacks: this.callbacks(call),
       });
@@ -295,12 +298,12 @@ export class VoiceSession {
     this.setMuted(!this.state.muted);
   }
 
-  /** 0..1, for the wolf's jaw. */
+  /** 0..1, for the head's jaw. */
   outputLevel(): number {
     return this.call?.connected ? this.options.transport.outputLevel() : 0;
   }
 
-  /** 0..1, for the wolf's listening tilt. */
+  /** 0..1, for the head's listening tilt. */
   inputLevel(): number {
     return this.call?.connected && !this.state.muted ? this.options.transport.inputLevel() : 0;
   }

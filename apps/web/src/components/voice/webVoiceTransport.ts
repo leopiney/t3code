@@ -53,7 +53,7 @@ async function requestMicrophone(): Promise<void> {
   if (devices?.getUserMedia === undefined) {
     throw new Error(
       globalThis.isSecureContext === false
-        ? "Browsers lend the microphone only to secure pages. Open T3 Code over https or on localhost to call WolfBud."
+        ? "Browsers lend the microphone only to secure pages. Open T3 Code over https or on localhost to call T3Bud."
         : "This browser has no microphone access.",
     );
   }
@@ -64,7 +64,7 @@ async function requestMicrophone(): Promise<void> {
     const name = error instanceof Error ? error.name : "";
     throw new Error(
       name === "NotAllowedError" || name === "SecurityError"
-        ? "WolfBud needs the microphone. Allow it for this page, then call again."
+        ? "T3Bud needs the microphone. Allow it for this page, then call again."
         : name === "NotFoundError"
           ? "No microphone was found."
           : `The microphone did not start: ${error instanceof Error ? error.message : String(error)}`,

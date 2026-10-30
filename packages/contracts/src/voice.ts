@@ -15,9 +15,13 @@ export const VOICE_AGENT_TOOL_NAMES = {
 export type VoiceAgentToolName =
   (typeof VOICE_AGENT_TOOL_NAMES)[keyof typeof VOICE_AGENT_TOOL_NAMES];
 
-/** What WolfBud says aloud without being asked: everything, only what needs the user, or nothing. */
+/** What T3Bud says aloud without being asked: everything, only what needs the user, or nothing. */
 export const VoiceAgentSpeakMode = Schema.Literals(["all", "needs", "none"]);
 export type VoiceAgentSpeakMode = typeof VoiceAgentSpeakMode.Type;
+
+/** The animal T3Bud appears as. The agent plays the same one. */
+export const T3BudAnimal = Schema.Literals(["wolf", "frog", "capybara", "axolotl"]);
+export type T3BudAnimal = typeof T3BudAnimal.Type;
 
 export const VoiceCreateCallTokenResult = Schema.Struct({
   token: TrimmedNonEmptyString,

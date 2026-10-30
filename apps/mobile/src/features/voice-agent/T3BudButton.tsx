@@ -1,4 +1,7 @@
+import { useAtomValue } from "@effect/atom-react";
 import type { VoiceFeedEntry, VoiceSessionState } from "@t3tools/client-runtime/voice/types";
+import type { T3BudAnimal } from "@t3tools/contracts";
+import { AsyncResult } from "effect/reactivity";
 import { Image } from "expo-image";
 import { useState } from "react";
 import { Platform, Pressable, useWindowDimensions, View } from "react-native";
@@ -11,18 +14,24 @@ import { SymbolView } from "../../components/ui/AppSymbol";
 import { AppText as Text } from "../../components/ui/AppText";
 import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/cn";
+import { mobilePreferencesAtom } from "../../state/preferences";
 import {
   DICTATION_PILL_HEIGHT,
   useEdgeControlBottom,
 } from "../voice-input/GlobalVoiceInputControl";
 
-const WOLF_IMAGE = require("../../../assets/wolfbud.png");
+const ANIMAL_IMAGES: Record<T3BudAnimal, number> = {
+  wolf: require("../../../assets/t3bud/wolf.png"),
+  frog: require("../../../assets/t3bud/frog.png"),
+  capybara: require("../../../assets/t3bud/capybara.png"),
+  axolotl: require("../../../assets/t3bud/axolotl.png"),
+};
 const TAB_WIDTH = 60;
 const TAB_HEIGHT = 48;
 const CARD_MAX_WIDTH = 320;
 const FEED_ROWS = 3;
 
-export interface WolfBudCallControls {
+export interface T3BudCallControls {
   readonly call: () => void;
   readonly end: () => void;
   readonly toggleMute: () => void;
@@ -60,8 +69,11 @@ const FEED_TONE_CLASS: Record<VoiceFeedEntry["tone"], string> = {
   action: "text-primary-text",
 };
 
-function WolfAvatar(props: { readonly state: VoiceSessionState; readonly size: number }) {
+function BuddyAvatar(props: { readonly state: VoiceSessionState; readonly size: number }) {
   const { state, size } = props;
+  const preferences = useAtomValue(mobilePreferencesAtom);
+  const animal =
+    (AsyncResult.isSuccess(preferences) ? preferences.value.t3BudAnimal : undefined) ?? "wolf";
   return (
     <View
       className={cn(
@@ -75,7 +87,7 @@ function WolfAvatar(props: { readonly state: VoiceSessionState; readonly size: n
       style={{ width: size + 4, height: size + 4 }}
     >
       <Image
-        source={WOLF_IMAGE}
+        source={ANIMAL_IMAGES[animal]}
         style={{ width: size, height: size, opacity: state.status === "connecting" ? 0.5 : 1 }}
         contentFit="contain"
         accessibilityIgnoresInvertColors
@@ -90,16 +102,16 @@ function WolfAvatar(props: { readonly state: VoiceSessionState; readonly size: n
 }
 
 /**
- * WolfBud docked at the screen's right edge above the dictation pill: a wolf tab that starts a
+ * T3Bud docked at the screen's right edge above the dictation pill: an animal tab that starts a
  * call, opening into a card with the agent's words, recent events, and the call controls.
  */
-export function WolfBudButton(props: {
+export function T3BudButton(props: {
   readonly state: VoiceSessionState;
   /** Why a call can't start, shown instead of calling. */
   readonly blocker: string | null;
   /** The environment whose ElevenLabs account takes the call. */
   readonly via: string | null;
-  readonly controls: WolfBudCallControls;
+  readonly controls: T3BudCallControls;
 }) {
   const { state, blocker, via, controls } = props;
   const insets = useSafeAreaInsets();
@@ -120,10 +132,10 @@ export function WolfBudButton(props: {
       }}
     >
       <View className="flex-row items-center gap-2.5">
-        <WolfAvatar state={state} size={36} />
+        <BuddyAvatar state={state} size={36} />
         <View className="min-w-0 flex-1">
           <Text className="font-t3-bold text-sm text-foreground" numberOfLines={1}>
-            WolfBud
+            T3Bud
             {via !== null ? (
               <Text className="font-sans text-xs text-foreground-muted">{` via ${via}`}</Text>
             ) : null}
@@ -133,7 +145,7 @@ export function WolfBudButton(props: {
           </Text>
         </View>
         <Pressable
-          accessibilityLabel="Hide WolfBud"
+          accessibilityLabel="Hide T3Bud"
           accessibilityRole="button"
           className="size-[32px] items-center justify-center active:opacity-70"
           hitSlop={6}
@@ -215,13 +227,13 @@ export function WolfBudButton(props: {
     </View>
   ) : (
     <Pressable
-      accessibilityLabel={`WolfBud, ${statusLine(state)}${via !== null ? `, via ${via}` : ""}`}
+      accessibilityLabel={`T3Bud, ${statusLine(state)}${via !== null ? `, via ${via}` : ""}`}
       accessibilityHint={
         inCall(state)
           ? "Shows the call controls"
           : blocker !== null
-            ? "Shows why WolfBud can't call"
-            : "Calls WolfBud"
+            ? "Shows why T3Bud can't call"
+            : "Calls T3Bud"
       }
       accessibilityRole="button"
       className="absolute items-center justify-center rounded-l-full border border-r-0 border-border bg-card shadow-md shadow-black/10 active:opacity-70"
@@ -231,7 +243,7 @@ export function WolfBudButton(props: {
         setExpanded(true);
       }}
     >
-      <WolfAvatar state={state} size={34} />
+      <BuddyAvatar state={state} size={34} />
       {state.waiting > 0 ? (
         <View className="absolute left-1 top-0.5 min-w-[18px] items-center rounded-full bg-primary px-1">
           <Text className="font-t3-bold text-3xs text-primary-foreground">{state.waiting}</Text>

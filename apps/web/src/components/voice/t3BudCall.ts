@@ -1,6 +1,6 @@
 import { useAtomValue } from "@effect/atom-react";
 import type { VoiceSession } from "@t3tools/client-runtime/voice/session";
-import type { ClientSettings } from "@t3tools/contracts";
+import type { ClientSettings, T3BudAnimal } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 import { useSyncExternalStore } from "react";
 
@@ -32,6 +32,11 @@ function isCallActive(): boolean {
 export const selectT3BudEnabled = (settings: ClientSettings) => settings.t3BudEnabled;
 export const selectT3BudSpeaks = (settings: ClientSettings) => settings.t3BudSpeaks;
 export const selectT3BudAnimal = (settings: ClientSettings) => settings.t3BudAnimal;
+
+const ASSET_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+/** An animal's 3D head (`glb`) or its flat icon on the night disc (`png`). */
+export const t3BudAssetUrl = (animal: T3BudAnimal, kind: "glb" | "png") =>
+  `${ASSET_BASE}/t3bud/${animal}.${kind}`;
 
 /**
  * Starts a call, or ends the one that is on. Nothing starts while no environment can take a

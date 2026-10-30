@@ -9,6 +9,14 @@ const openControl =
     if (!event.repeat) composerRef.current?.openControl(control);
   };
 
+/** Held keys do not repeat a step. A model with nothing to step leaves the key alone. */
+function stepEffort(composerRef: ComposerHandleRef, direction: 1 | -1) {
+  return ({ event }: { readonly event: KeyboardEvent }) => {
+    if (event.repeat) return;
+    if (composerRef.current?.stepReasoningEffort(direction) !== true) return false;
+  };
+}
+
 /** Chords that open or step the composer's controls and its branch toolbar. Held keys do not repeat them. */
 export function composerShortcutCommands(
   composerRef: ComposerHandleRef,
@@ -18,12 +26,8 @@ export function composerShortcutCommands(
     "modelPicker.toggle": ({ event }) => {
       if (!event.repeat) composerRef.current?.toggleModelPicker();
     },
-    "composer.increaseEffort": ({ event }) => {
-      if (!event.repeat) composerRef.current?.stepReasoningEffort(1);
-    },
-    "composer.decreaseEffort": ({ event }) => {
-      if (!event.repeat) composerRef.current?.stepReasoningEffort(-1);
-    },
+    "composer.increaseEffort": stepEffort(composerRef, 1),
+    "composer.decreaseEffort": stepEffort(composerRef, -1),
     "composer.host": openControl(composerRef, "composer.host"),
     "composer.effort": openControl(composerRef, "composer.effort"),
     "composer.mode": openControl(composerRef, "composer.mode"),

@@ -138,6 +138,8 @@ export interface ComposerPromptEditorHandle {
     contextIds: string[];
   };
   isCaretOnVisualEdge: (edge: "start" | "end") => boolean;
+  /** Shift+Tab outdents a code block or focuses a citation comment instead of cycling effort. */
+  ownsShiftTab: () => boolean;
 }
 
 export interface ComposerPromptEditorProps {
@@ -762,6 +764,22 @@ function replaceSkillChips(
   editor.view.dispatch(transaction);
 }
 
+function citationCommentButton(view: EditorView): HTMLElement | null {
+  if (!view.state.selection.empty) return null;
+  const { $from } = view.state.selection;
+  const citation = $from.nodeBefore;
+  if (citation?.type.name !== "composer-citation") return null;
+  const chip = view.nodeDOM($from.pos - citation.nodeSize);
+  return chip instanceof HTMLElement
+    ? chip.querySelector<HTMLElement>("[data-citation-comment-trigger]")
+    : null;
+}
+
+/** Shift+Tab already edits the draft here, so effort cycling leaves the key alone. */
+function editorOwnsShiftTab(view: EditorView): boolean {
+  return selectionInOneCodeBlock(view.state) || citationCommentButton(view) !== null;
+}
+
 export function ComposerPromptEditorTiptap(props: ComposerPromptEditorProps) {
   const restoreFocusRef = useRef(false);
   const { onChange: onPromptChange } = props;
@@ -1206,29 +1224,19 @@ function ComposerPromptEditorTiptapInner(
             }
           }
           // Native tab order skips citation comment buttons inside the editor.
-          if (
+          const commentButton =
             event.key === "Tab" &&
             event.shiftKey &&
             !event.altKey &&
             !event.metaKey &&
-            !event.ctrlKey &&
-            view.state.selection.empty
-          ) {
-            const { $from } = view.state.selection;
-            const citation = $from.nodeBefore;
-            if (citation?.type.name === "composer-citation") {
-              const chip = view.nodeDOM($from.pos - citation.nodeSize);
-              const commentButton =
-                chip instanceof HTMLElement
-                  ? chip.querySelector<HTMLElement>("[data-citation-comment-trigger]")
-                  : null;
-              if (commentButton) {
-                event.preventDefault();
-                event.stopPropagation();
-                commentButton.focus();
-                return true;
-              }
-            }
+            !event.ctrlKey
+              ? citationCommentButton(view)
+              : null;
+          if (commentButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            commentButton.focus();
+            return true;
           }
           if (event.key === "Enter" && (event.isComposing || event.keyCode === 229)) {
             event.stopPropagation();
@@ -1728,6 +1736,7 @@ function ComposerPromptEditorTiptapInner(
           ? caretRect.top - edgeRect.top < threshold
           : edgeRect.bottom - caretRect.bottom < threshold;
       },
+      ownsShiftTab: () => (editor ? editorOwnsShiftTab(editor.view) : false),
     }),
     [editor, focusAt, literalText, readSnapshot],
   );

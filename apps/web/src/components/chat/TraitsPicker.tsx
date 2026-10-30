@@ -327,6 +327,8 @@ interface TraitsMenuContentProps {
   extraMenuOwnsModeShortcut?: boolean;
   /** Extra tooltip text naming what else the menu holds. */
   extraMenuHint?: string;
+  /** Shown on the composer effort chip. Shift+Tab cycles; the picker still opens from its own shortcut. */
+  cycleShortcutLabel?: string;
 }
 
 export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
@@ -340,6 +342,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
   reportedModelSelection,
   allowPromptInjectedEffort = true,
   planModeEnabled,
+  cycleShortcutLabel: _cycleShortcutLabel,
   ...persistence
 }: TraitsMenuContentProps & TraitsPersistence) {
   const modelSelection =
@@ -546,6 +549,7 @@ export const TraitsPicker = memo(function TraitsPicker({
   extraMenuContent,
   extraMenuOwnsModeShortcut,
   extraMenuHint,
+  cycleShortcutLabel,
   size = "sm",
   hidden = false,
   disabled = false,
@@ -728,7 +732,10 @@ export const TraitsPicker = memo(function TraitsPicker({
             </>
           )}
         </TooltipTrigger>
-        <TooltipPopup side="top">{triggerDescription}</TooltipPopup>
+        <TooltipPopup side="top">
+          {triggerDescription}
+          {isComposerOwned && cycleShortcutLabel ? ` · ${cycleShortcutLabel}` : null}
+        </TooltipPopup>
       </Tooltip>
       <MenuPopup align="start" {...(isComposerOwned ? composerFloatingLayerProps : {})}>
         <TraitsMenuContent

@@ -33,7 +33,7 @@ import { ReopenClosedViewShortcut } from "../components/ReopenClosedViewShortcut
 import { ProjectCloneToastCoordinator } from "../components/ProjectCloneToastCoordinator";
 import { ChatGptWelcomeCoordinator } from "../components/settings/ChatGptWelcomeCoordinator";
 import { ThemeEditorHost } from "../components/settings/ThemeEditorHost";
-import { WolfBudHost } from "../components/voice/WolfBudHost";
+import { T3BudHost } from "../components/voice/T3BudHost";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { Button } from "../components/ui/button";
 import { MorphIcon } from "~/components/MorphIcon";
@@ -221,7 +221,7 @@ function RootRouteBranch() {
         {/* Keep the theme editor above the router so drafts survive navigation. */}
         <ThemeEditorHost />
         {/* Above the router too, so a call survives navigation. */}
-        <WolfBudHost />
+        <T3BudHost />
       </FirstRunGate>
     </>
   );

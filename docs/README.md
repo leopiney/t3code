@@ -13,7 +13,7 @@
 - [Keyboard shortcuts](./user/keybindings.md)
 - [SnapShots](./user/snap-shot.md)
 - [Visual replies](./user/html-renders.md)
-- [Voice calls with WolfBud](./user/voice.md)
+- [Voice calls with T3Bud](./user/voice.md)
 - [Import browser sessions](./user/browser-import.md)
 - [Use T3 Code as your default browser](./user/default-browser.md)
 - [Devices](./user/devices.md)

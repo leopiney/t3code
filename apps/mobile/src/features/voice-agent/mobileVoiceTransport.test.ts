@@ -103,9 +103,9 @@ describe("createMobileVoiceTransport", () => {
       name: "a refused microphone",
       startSession: () => {},
       requestMicrophone: async () => {
-        throw new Error("WolfBud needs the microphone to hear you.");
+        throw new Error("T3Bud needs the microphone to hear you.");
       },
-      message: "WolfBud needs the microphone to hear you.",
+      message: "T3Bud needs the microphone to hear you.",
     },
     {
       name: "a start the provider drops while its last session closes",

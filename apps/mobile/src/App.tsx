@@ -75,7 +75,7 @@ import { installUiRuntimeMemoryWarningGc } from "./lib/useUiRuntimeMemoryWarning
 import { SubscriptionUsageCoordinator } from "./widgets/SubscriptionUsageCoordinator";
 import { installSubscriptionUsageRefresh } from "./widgets/useSubscriptionUsage";
 import { GlobalVoiceInputControl } from "./features/voice-input/GlobalVoiceInputControl";
-import { WolfBudHost } from "./features/voice-agent/WolfBudHost";
+import { T3BudHost } from "./features/voice-agent/T3BudHost";
 import { setVoiceAgentPathname } from "./features/voice-agent/voiceOpenThread";
 import { restoreSettingsLinkState } from "./features/settings/settings-navigation";
 import {
@@ -249,7 +249,7 @@ function AppContent() {
                 <ProjectChipIconRasterizer />
               </NativeLayoutMetricsProvider>
             </GlobalVoiceInputControl>
-            <WolfBudHost navigate={linkToAppPath} />
+            <T3BudHost navigate={linkToAppPath} />
             <OverlayPortalHost />
           </SafeAreaProvider>
         </KeyboardProvider>

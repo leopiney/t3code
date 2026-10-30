@@ -4,7 +4,7 @@ import { Atom } from "effect/reactivity";
 import { appAtomRegistry } from "../../state/atom-registry";
 import { parseActiveThreadPath } from "../keyboard/hardwareKeyboardCommands";
 
-/** The thread on screen, which WolfBud's tools act on when the agent names none. */
+/** The thread on screen, which T3Bud's tools act on when the agent names none. */
 export const voiceOpenThreadAtom = Atom.make<ScopedThreadRef | null>(null).pipe(
   Atom.keepAlive,
   Atom.withLabel("mobile:voice-agent-open-thread"),

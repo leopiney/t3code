@@ -4,7 +4,7 @@ import {
   squashAtomCommandFailure,
   type AtomCommandResult,
 } from "@t3tools/client-runtime/state/runtime";
-import { AuthSettingsWriteScope, type VoiceAgentSpeakMode } from "@t3tools/contracts";
+import { AuthSettingsWriteScope, T3BudAnimal, type VoiceAgentSpeakMode } from "@t3tools/contracts";
 import { AsyncResult } from "effect/reactivity";
 import { useState } from "react";
 import { View } from "react-native";
@@ -29,6 +29,13 @@ import { SettingsSection } from "./components/SettingsSection";
 import { SettingsSwitchRow } from "./components/SettingsSwitchRow";
 import type { SettingsTarget } from "./settings-environment-filter";
 
+const ANIMAL_LABELS: Record<T3BudAnimal, string> = {
+  wolf: "Wolf",
+  frog: "Frog",
+  capybara: "Capybara",
+  axolotl: "Axolotl",
+};
+
 const SPEAK_OPTIONS: ReadonlyArray<{
   readonly mode: VoiceAgentSpeakMode;
   readonly label: string;
@@ -40,7 +47,7 @@ const SPEAK_OPTIONS: ReadonlyArray<{
     label: "Only what needs you",
     description: "Approvals, questions, failures and usage limits.",
   },
-  { mode: "none", label: "Nothing", description: "WolfBud speaks only when you ask." },
+  { mode: "none", label: "Nothing", description: "T3Bud speaks only when you ask." },
 ];
 
 const ELEVENLABS_FOOTER =
@@ -58,36 +65,49 @@ export function SettingsVoiceRouteScreen() {
         contentContainerClassName="gap-6 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
-        <WolfBudSettingsSections />
+        <T3BudSettingsSections />
         <ElevenLabsSettingsSections />
       </ScrollView>
     </SettingsScreen>
   );
 }
 
-function WolfBudSettingsSections() {
+function T3BudSettingsSections() {
   const preferences = useAtomValue(mobilePreferencesAtom);
   const savePreferences = useAtomSet(updateMobilePreferencesAtom);
   const ready = AsyncResult.isSuccess(preferences) && !preferences.waiting;
   const stored = AsyncResult.isSuccess(preferences) ? preferences.value : null;
-  const speaks = stored?.wolfBudSpeaks ?? "all";
+  const speaks = stored?.t3BudSpeaks ?? "all";
+  const animal = stored?.t3BudAnimal ?? "wolf";
   return (
     <>
       <SettingsSection
-        title="WolfBud"
+        title="T3Bud"
         footer="A voice agent that follows your threads, tells you when one finishes or needs you, and acts on them when you ask."
       >
         <SettingsSwitchRow
           icon="waveform"
-          label="Show WolfBud"
-          value={stored?.wolfBudEnabled === true}
+          label="Show T3Bud"
+          value={stored?.t3BudEnabled === true}
           disabled={!ready}
-          onValueChange={(value) => savePreferences({ wolfBudEnabled: value })}
+          onValueChange={(value) => savePreferences({ t3BudEnabled: value })}
         />
+      </SettingsSection>
+      <SettingsSection title="Animal" footer="T3Bud plays the same animal on calls.">
+        {T3BudAnimal.literals.map((option, index) => (
+          <SettingsChoiceRow
+            key={option}
+            label={ANIMAL_LABELS[option]}
+            selected={animal === option}
+            separated={index > 0}
+            disabled={!ready}
+            onPress={() => savePreferences({ t3BudAnimal: option })}
+          />
+        ))}
       </SettingsSection>
       <SettingsSection
         title="Speak updates aloud"
-        footer="Updates WolfBud doesn't speak still reach it, so you can ask what happened."
+        footer="Updates T3Bud doesn't speak still reach it, so you can ask what happened."
       >
         {SPEAK_OPTIONS.map((option, index) => (
           <SettingsChoiceRow
@@ -97,7 +117,7 @@ function WolfBudSettingsSections() {
             selected={speaks === option.mode}
             separated={index > 0}
             disabled={!ready}
-            onPress={() => savePreferences({ wolfBudSpeaks: option.mode })}
+            onPress={() => savePreferences({ t3BudSpeaks: option.mode })}
           />
         ))}
       </SettingsSection>
@@ -205,7 +225,7 @@ function ElevenLabsKeySection(props: {
   const remove = () =>
     Dialog.confirm({
       title: "Remove the ElevenLabs key?",
-      message: `WolfBud can't call through ${environment.label} until a key is added again.`,
+      message: `T3Bud can't call through ${environment.label} until a key is added again.`,
       confirmText: "Remove",
       destructive: true,
       onConfirm: () => void writeKey("", "remove"),
@@ -249,7 +269,7 @@ function ElevenLabsKeySection(props: {
               <SettingsActionRow
                 icon="sparkles"
                 label="Set up voice agent"
-                description="Checks the key and creates or updates WolfBud in your ElevenLabs account."
+                description="Checks the key and creates or updates T3Bud in your ElevenLabs account."
                 loading={pending === "setup"}
                 disabled={pending !== null}
                 onPress={() => void setUp()}

@@ -48,7 +48,7 @@ import {
   ProviderDriverKind,
 } from "./providerInstance.ts";
 import { PullRequestMergeMethod } from "./pullRequest.ts";
-import { VoiceAgentSpeakMode } from "./voice.ts";
+import { T3BudAnimal, VoiceAgentSpeakMode } from "./voice.ts";
 
 export const TimestampFormat = Schema.Literals(["locale", "12-hour", "24-hour"]);
 export type TimestampFormat = typeof TimestampFormat.Type;
@@ -522,10 +522,9 @@ export const ClientSettingsSchema = Schema.Struct({
   // Opt-in TeX typesetting in rendered Markdown. Off keeps math parsing and
   // KaTeX out of the render path entirely.
   mathRenderingEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
-  wolfBudEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
-  wolfBudSpeaks: VoiceAgentSpeakMode.pipe(
-    Schema.withDecodingDefault(Effect.succeed("all" as const)),
-  ),
+  t3BudEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  t3BudSpeaks: VoiceAgentSpeakMode.pipe(Schema.withDecodingDefault(Effect.succeed("all" as const))),
+  t3BudAnimal: T3BudAnimal.pipe(Schema.withDecodingDefault(Effect.succeed("wolf" as const))),
 });
 export type ClientSettings = typeof ClientSettingsSchema.Type;
 
@@ -1864,7 +1863,8 @@ export const ClientSettingsPatch = Schema.Struct({
   snapShotAnimations: Schema.optionalKey(Schema.Boolean),
   wordWrap: Schema.optionalKey(Schema.Boolean),
   mathRenderingEnabled: Schema.optionalKey(Schema.Boolean),
-  wolfBudEnabled: Schema.optionalKey(Schema.Boolean),
-  wolfBudSpeaks: Schema.optionalKey(VoiceAgentSpeakMode),
+  t3BudEnabled: Schema.optionalKey(Schema.Boolean),
+  t3BudSpeaks: Schema.optionalKey(VoiceAgentSpeakMode),
+  t3BudAnimal: Schema.optionalKey(T3BudAnimal),
 });
 export type ClientSettingsPatch = typeof ClientSettingsPatch.Type;

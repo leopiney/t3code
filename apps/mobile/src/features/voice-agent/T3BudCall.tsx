@@ -7,9 +7,9 @@ import { useEnvironmentPresentation } from "../../state/presentation";
 import { voiceCallBlockerAtom } from "../../state/voice";
 import { connectMobileVoiceSession, createMobileVoiceSession } from "./mobileVoiceSession";
 import { createMobileVoiceTransport } from "./mobileVoiceTransport";
-import { WolfBudButton } from "./WolfBudButton";
+import { T3BudButton } from "./T3BudButton";
 
-interface WolfBudCallProps {
+interface T3BudCallProps {
   readonly navigate: (href: string) => void;
 }
 
@@ -18,12 +18,12 @@ async function requestMicrophone(): Promise<void> {
   if (permission.granted) return;
   throw new Error(
     permission.canAskAgain
-      ? "WolfBud needs the microphone to hear you."
+      ? "T3Bud needs the microphone to hear you."
       : "Microphone access is off for T3 Code. Turn it on in Settings, then call again.",
   );
 }
 
-function WolfBudSession(props: WolfBudCallProps) {
+function T3BudSession(props: T3BudCallProps) {
   const controls = useConversationControls();
   const [session] = useState(() =>
     createMobileVoiceSession({
@@ -31,13 +31,13 @@ function WolfBudSession(props: WolfBudCallProps) {
       navigate: props.navigate,
     }),
   );
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- feeds the call the app's threads, open thread and speak mode, and ends it when WolfBud turns off
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- feeds the call the app's threads, open thread and speak mode, and ends it when T3Bud turns off
   useEffect(() => connectMobileVoiceSession(session), [session]);
   const state = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const blocker = useAtomValue(voiceCallBlockerAtom);
   const via = useEnvironmentPresentation(state.environmentId).presentation?.entry.target.label;
   return (
-    <WolfBudButton
+    <T3BudButton
       state={state}
       blocker={blocker}
       via={via ?? null}
@@ -50,11 +50,11 @@ function WolfBudSession(props: WolfBudCallProps) {
   );
 }
 
-/** Loaded only while WolfBud is on: importing the ElevenLabs SDK installs WebRTC globals. */
-export default function WolfBudCall(props: WolfBudCallProps) {
+/** Loaded only while T3Bud is on: importing the ElevenLabs SDK installs WebRTC globals. */
+export default function T3BudCall(props: T3BudCallProps) {
   return (
     <ConversationProvider>
-      <WolfBudSession navigate={props.navigate} />
+      <T3BudSession navigate={props.navigate} />
     </ConversationProvider>
   );
 }

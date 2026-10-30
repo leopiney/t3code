@@ -40,7 +40,7 @@ import { startVoiceThread } from "./voiceStartThread";
 /** Mints the call token on the connected environment `selectVoiceEnvironment` picks. */
 async function createCallToken(): Promise<VoiceCallToken> {
   const candidates = appAtomRegistry.get(voiceCallCandidatesAtom);
-  if (candidates.length === 0) throw new Error("Connect to an environment to call WolfBud.");
+  if (candidates.length === 0) throw new Error("Connect to an environment to call T3Bud.");
   const environmentId = selectVoiceEnvironment(candidates);
   if (environmentId === null) {
     throw new VoiceAgentError({
@@ -95,6 +95,12 @@ export function createMobileVoiceSession(input: {
       openThread: (ref) => input.navigate(threadHref(ref)),
       startThread: startVoiceThread,
     },
+    animal: () => {
+      const preferences = appAtomRegistry.get(mobilePreferencesAtom);
+      return (
+        (AsyncResult.isSuccess(preferences) ? preferences.value.t3BudAnimal : undefined) ?? "wolf"
+      );
+    },
     subscribeThread: createVoiceThreadSubscriber(
       appAtomRegistry,
       environmentThreadDetails.threadAtom,
@@ -122,7 +128,7 @@ export function connectMobileVoiceSession(session: VoiceSession): () => void {
     mobilePreferencesAtom,
     (preferences) =>
       session.setSpeakMode(
-        (AsyncResult.isSuccess(preferences) ? preferences.value.wolfBudSpeaks : undefined) ?? "all",
+        (AsyncResult.isSuccess(preferences) ? preferences.value.t3BudSpeaks : undefined) ?? "all",
       ),
     { immediate: true },
   );

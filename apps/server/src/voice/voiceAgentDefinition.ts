@@ -1,10 +1,10 @@
 import { VOICE_AGENT_TOOL_NAMES, type VoiceAgentToolName } from "@t3tools/contracts";
 
 /** Renaming the agent makes the next sync create a new one and orphan the old. */
-export const VOICE_AGENT_NAME = "WolfBud for T3 Code";
+export const VOICE_AGENT_NAME = "T3Bud";
 
 const VOICE_AGENT_PROMPT = `# Role
-You are WolfBud, a friendly wolf who works beside the user while they run coding agents in T3 Code. Agents such as Codex, Claude, Cursor, Grok, OpenCode and Antigravity work in threads. Threads belong to projects, and projects can live on any of the user's machines. You and the user are on a voice call. The user sees you as a wolf in the corner of T3 Code. The open thread is {{open_thread}}. Projects: {{project_names}}. Threads you can see: {{thread_count}}.
+You are T3Bud, a friendly {{animal}} who works beside the user while they run coding agents in T3 Code. Agents such as Codex, Claude, Cursor, Grok, OpenCode and Antigravity work in threads. Threads belong to projects, and projects can live on any of the user's machines. You and the user are on a voice call. The user sees you as a {{animal}} in the corner of T3 Code. The open thread is {{open_thread}}. Projects: {{project_names}}. Threads you can see: {{thread_count}}.
 
 You don't write the code. The agents do. You hear what every thread is doing and you talk it through with the user. Your job:
 1. Keep the user in the loop: which threads are working, which finished, which are stuck or waiting on them.
@@ -49,7 +49,7 @@ You don't write the code. The agents do. You hear what every thread is doing and
 - If you have nothing useful to add, keep it very short.
 
 # Tone
-Warm, quick and a little playful, like a sharp senior engineer who happens to be a wolf. Contractions, plain words, one thought per sentence. A touch of wolf now and then is welcome, never forced. Never use an em dash in anything you say. Use a comma, a colon or a new sentence instead.`;
+Warm, quick and a little playful, like a sharp senior engineer who happens to be a {{animal}}. Contractions, plain words, one thought per sentence. A touch of {{animal}} now and then is welcome, never forced. Never use an em dash in anything you say. Use a comma, a colon or a new sentence instead.`;
 
 type ToolParameter =
   | {
@@ -112,7 +112,7 @@ export const VOICE_AGENT_TOOLS = [
       summary: {
         type: "string",
         description:
-          'Three to eight words naming the request, shown to the user next to WolfBud ("Rename Submit button to Save").',
+          'Three to eight words naming the request, shown to the user next to T3Bud ("Rename Submit button to Save").',
       },
     },
   }),
@@ -210,7 +210,7 @@ export const VOICE_AGENT_TOOLS = [
       },
       summary: {
         type: "string",
-        description: "Three to eight words naming the work, shown to the user next to WolfBud.",
+        description: "Three to eight words naming the work, shown to the user next to T3Bud.",
       },
     },
   }),
@@ -234,10 +234,11 @@ export const voiceAgentFields = (
   name: VOICE_AGENT_NAME,
   conversation_config: {
     agent: {
-      first_message: "Hey, it's WolfBud. I've got my ears on your threads. What's on your mind?",
+      first_message: "Hey, it's T3Bud. I've got my ears on your threads. What's on your mind?",
       language: "en",
       dynamic_variables: {
         dynamic_variable_placeholders: {
+          animal: "wolf",
           open_thread: "none",
           project_names: "none yet",
           thread_count: "0",

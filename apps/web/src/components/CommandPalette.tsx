@@ -103,11 +103,11 @@ import {
 } from "./promptLinks/copyPromptLink";
 import { useClientSettings } from "../hooks/useSettings";
 import {
-  selectWolfBudEnabled,
-  toggleWolfBudCall,
-  useWolfBudCallActive,
-  useWolfBudCallReady,
-} from "./voice/wolfBudCall";
+  selectT3BudEnabled,
+  toggleT3BudCall,
+  useT3BudCallActive,
+  useT3BudCallReady,
+} from "./voice/t3BudCall";
 import { useStableCallback } from "../hooks/useStableCallback";
 import { readLocalApi } from "../localApi";
 import { desktopLocalBackendId } from "../connection/desktopLocal";
@@ -412,9 +412,9 @@ function OpenCommandPaletteDialog(props: {
     setHighlightedItemValue(null);
   }
   const clientSettings = useClientSettings(selectCommandPaletteClientSettings);
-  const wolfBudEnabled = useClientSettings(selectWolfBudEnabled);
-  const wolfBudCallActive = useWolfBudCallActive();
-  const wolfBudCallReady = useWolfBudCallReady(wolfBudEnabled);
+  const t3BudEnabled = useClientSettings(selectT3BudEnabled);
+  const t3BudCallActive = useT3BudCallActive();
+  const t3BudCallReady = useT3BudCallReady(t3BudEnabled);
   const createProject = useAtomCommand(projectEnvironment.create, {
     reportFailure: false,
   });
@@ -1516,20 +1516,20 @@ function OpenCommandPaletteDialog(props: {
     },
   });
 
-  if (wolfBudEnabled && (wolfBudCallActive || wolfBudCallReady)) {
+  if (t3BudEnabled && (t3BudCallActive || t3BudCallReady)) {
     actionItems.push({
       kind: "action",
-      value: "action:wolfbud-call",
-      searchTerms: ["wolfbud", "voice", "call", "talk", "hang up", "agent", "elevenlabs"],
-      title: wolfBudCallActive ? "End WolfBud call" : "Call WolfBud",
-      icon: wolfBudCallActive ? (
+      value: "action:t3bud-call",
+      searchTerms: ["t3bud", "voice", "call", "talk", "hang up", "agent", "elevenlabs"],
+      title: t3BudCallActive ? "End T3Bud call" : "Call T3Bud",
+      icon: t3BudCallActive ? (
         <PhoneOffIcon className={ITEM_ICON_CLASS} />
       ) : (
         <PhoneIcon className={ITEM_ICON_CLASS} />
       ),
       shortcutCommand: "voice.toggleCall",
       run: async () => {
-        toggleWolfBudCall();
+        toggleT3BudCall();
       },
     });
   }

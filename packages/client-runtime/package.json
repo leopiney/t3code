@@ -155,9 +155,9 @@
       "types": "./src/voice/host.ts",
       "default": "./src/voice/host.ts"
     },
-    "./voice/wolf-head": {
-      "types": "./src/voice/wolfHead.ts",
-      "default": "./src/voice/wolfHead.ts"
+    "./voice/buddy-head": {
+      "types": "./src/voice/buddyHead.ts",
+      "default": "./src/voice/buddyHead.ts"
     },
     "./t3ToolSummary": {
       "types": "./src/t3ToolSummary.ts",

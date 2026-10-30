@@ -73,7 +73,7 @@ it.each<{
   {
     name: "no connected environment",
     rows: [],
-    blocker: "Connect to an environment to call WolfBud.",
+    blocker: "Connect to an environment to call T3Bud.",
     calls: null,
   },
   {

@@ -18,7 +18,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 import { createRenderScheduler } from "../device/renderScheduler.ts";
 
-// View tuning, from WolfBud's head.
+// View tuning, from the wolf, the first T3Bud head. Every animal's model shares its framing.
 const BASE_AZ = MathUtils.degToRad(-42);
 const BASE_EL = MathUtils.degToRad(29);
 const DRIFT_AZ = MathUtils.degToRad(4);
@@ -57,22 +57,22 @@ const ORIGIN = new Vector3();
 const UP = new Vector3(0, 1, 0);
 
 /** Asleep: no call. Awake: on a call, quiet. Listening: the user talks. Speaking: the agent talks. */
-export type WolfMood = "asleep" | "awake" | "listening" | "speaking";
+export type BuddyMood = "asleep" | "awake" | "listening" | "speaking";
 
-export interface WolfHead {
-  readonly setMood: (mood: WolfMood) => void;
-  /** A nod, as when the user clicks the wolf. */
+export interface BuddyHead {
+  readonly setMood: (mood: BuddyMood) => void;
+  /** A nod, as when the user clicks T3Bud. */
   readonly pet: () => void;
   readonly resize: (size: number, pixelRatio: number) => void;
   readonly dispose: () => void;
 }
 
-export interface WolfHeadOptions {
+export interface BuddyHeadOptions {
   readonly canvas: HTMLCanvasElement;
   readonly modelUrl: string;
   /** Raw 0..1 voice levels, read once a frame and only while speaking or listening. */
   readonly levels: { readonly output: () => number; readonly input: () => number };
-  /** The model failed to load or WebGL went away: show the flat wolf instead. */
+  /** The model failed to load or WebGL went away: show the flat icon instead. */
   readonly onUnavailable: () => void;
 }
 
@@ -102,10 +102,10 @@ function disposeObject(root: Object3D): void {
 }
 
 /**
- * The WolfBud head. It draws only while something moves: the agent's voice, the user's,
+ * The T3Bud head. It draws only while something moves: the agent's voice, the user's,
  * the pointer moving, a nod, or a change of mood settling. Returns null without WebGL.
  */
-export function createWolfHead(options: WolfHeadOptions): WolfHead | null {
+export function createBuddyHead(options: BuddyHeadOptions): BuddyHead | null {
   const { canvas } = options;
   let renderer: WebGLRenderer;
   try {
@@ -135,7 +135,7 @@ export function createWolfHead(options: WolfHeadOptions): WolfHead | null {
   let model: Group | null = null;
   let jaw: Object3D | null = null;
   let jawRestX = 0;
-  let mood: WolfMood = "asleep";
+  let mood: BuddyMood = "asleep";
   let jawValue = 0;
   let listen = 0;
   let sleep = 1;

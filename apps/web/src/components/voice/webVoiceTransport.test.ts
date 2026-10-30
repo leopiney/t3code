@@ -128,14 +128,12 @@ describe("createWebVoiceTransport", () => {
     const startSession = vi.fn(async () => fakeConversation());
     const transport = createWebVoiceTransport({
       requestMicrophone: async () => {
-        throw new Error("WolfBud needs the microphone. Allow it for this page, then call again.");
+        throw new Error("T3Bud needs the microphone. Allow it for this page, then call again.");
       },
       startSession,
     });
 
-    await expect(transport.start(start(callbacks()))).rejects.toThrow(
-      "WolfBud needs the microphone",
-    );
+    await expect(transport.start(start(callbacks()))).rejects.toThrow("T3Bud needs the microphone");
     expect(startSession).not.toHaveBeenCalled();
   });
 });

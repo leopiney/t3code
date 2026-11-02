@@ -7,6 +7,7 @@ import {
   createThreadNotificationGate,
   observeThreadNotification,
   type ThreadNotificationKind,
+  type ThreadNotificationSchedule,
   type ThreadNotificationState,
 } from "@t3tools/client-runtime/state/thread-notification-gate";
 import { isShownUnderParent } from "@t3tools/client-runtime/state/threads";
@@ -37,6 +38,12 @@ import {
   unlockNotificationAudio,
 } from "../threadNotifications";
 import { toastManager } from "./ui/toast";
+
+// Completion alerts fire when the shell reports them. The voice agent keeps the inbox grace.
+const notifyCompletionImmediately: ThreadNotificationSchedule = (_delayMs, run) => {
+  run();
+  return () => {};
+};
 
 interface NotificationState extends ThreadNotificationState {
   readonly raw: OrchestrationV2ThreadShell;
@@ -277,7 +284,7 @@ export function startThreadNotifications(
       gate: createThreadNotificationGate<ThreadId>((threadId, kind) => {
         const state = entry.previous.get(threadId);
         if (state) present(environmentId, state, kind);
-      }),
+      }, notifyCompletionImmediately),
     };
     let threads: ReadonlyArray<OrchestrationV2ThreadShell> | null = null;
     const unsubscribeShell = registry.subscribe(

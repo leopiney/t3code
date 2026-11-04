@@ -18,7 +18,6 @@ import {
 } from "@t3tools/contracts";
 import { buildTemporaryWorktreeBranchName } from "@t3tools/shared/git";
 import {
-  resolveNewThreadEnvMode,
   resolveProjectSettings,
   type ResolvedProjectSettings,
 } from "@t3tools/shared/projectSettings";
@@ -35,7 +34,6 @@ import { buildProjectThreadStartTurnInput } from "../../lib/projectThreadStartTu
 import { randomHex } from "../../lib/uuid";
 import { appAtomRegistry } from "../../state/atom-registry";
 import { environmentPresentations } from "../../state/presentation";
-import { projectHasThreadsAtom } from "../../state/project-has-threads";
 import { projectEnvironment } from "../../state/projects";
 import { VCS_REF_LIST_LIMIT } from "../../state/queries";
 import { serverEnvironment } from "../../state/server";
@@ -103,20 +101,20 @@ function newTaskModel(config: ServerConfig, project: Project, settings: ProjectS
   }).selection;
 }
 
-/** The new-task workspace: a worktree off the default branch when the project defaults to one. */
-async function newTaskWorkspace(config: ServerConfig, project: Project, settings: ProjectSettings) {
-  if (project.workspaceRoot === "" || isScratchProject(project, config.scratchWorkspaceRoot)) {
+/** The new-task workspace: a worktree off the default branch when T3Bud asked for one and the project has a repo. */
+async function newTaskWorkspace(
+  config: ServerConfig,
+  project: Project,
+  settings: ProjectSettings,
+  mode: VoiceStartThreadInput["workspace"],
+) {
+  if (
+    mode !== "worktree" ||
+    project.workspaceRoot === "" ||
+    isScratchProject(project, config.scratchWorkspaceRoot)
+  ) {
     return LOCAL_WORKSPACE;
   }
-  const mode = resolveNewThreadEnvMode({
-    projectSettings: settings,
-    workspaceRoot: project.workspaceRoot,
-    newProjectsRoot: config.newProjectsRoot,
-    projectHasThreads: appAtomRegistry.get(
-      projectHasThreadsAtom(project.environmentId)(project.id),
-    ),
-  });
-  if (mode !== "worktree") return LOCAL_WORKSPACE;
   const result = await executeAtomQuery(
     appAtomRegistry,
     vcsEnvironment.listRefs({
@@ -141,11 +139,12 @@ async function newTaskWorkspace(config: ServerConfig, project: Project, settings
   } as const;
 }
 
-/** Starts a thread with the project's defaults for model, access and workspace, as a new task does. */
+/** Starts a thread with the project's defaults for model and access, as a new task does, in the workspace asked for. */
 export async function startVoiceThread({
   project,
   prompt,
   summary,
+  workspace: mode,
 }: VoiceStartThreadInput): Promise<ScopedThreadRef> {
   const presentation = appAtomRegistry
     .get(environmentPresentations.presentationsAtom)
@@ -163,7 +162,7 @@ export async function startVoiceThread({
   );
   const modelSelection = newTaskModel(config, project, settings);
   if (modelSelection === null) throw new Error(`no provider is ready to work in ${project.title}`);
-  const workspace = await newTaskWorkspace(config, project, settings);
+  const workspace = await newTaskWorkspace(config, project, settings, mode);
   const metadata = makeTurnCommandMetadata();
   const result = await runAtomCommand(
     appAtomRegistry,

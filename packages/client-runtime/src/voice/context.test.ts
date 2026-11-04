@@ -42,7 +42,11 @@ describe("buildVoiceSnapshot", () => {
     const threads = [
       shell("old-done", finishedFields("old-done", T0 - 180 * MINUTE)),
       shell("new-done", finishedFields("new-done", T0 - 10 * MINUTE)),
-      shell("working", workingFields("working", T0 - 4 * MINUTE)),
+      shell("working", {
+        ...workingFields("working", T0 - 4 * MINUTE),
+        branch: "t3/fix-cart",
+        worktreePath: "/worktrees/fix-cart",
+      }),
       shell("approval", approvalFields("approval", T0 - 2 * MINUTE)),
       shell("broken", failedFields("broken", T0 - 30 * MINUTE, "the test timed out")),
       // A failure the user settled no longer needs them: it ranks by recency.
@@ -66,11 +70,11 @@ describe("buildVoiceSnapshot", () => {
       [
         '[t3 snapshot] 6 threads in 1 project. Open in the app: t4 "new-done".',
         '"shop":',
-        '- t1 "approval" (Codex): needs approval to run a command.',
-        '- t2 "broken" (Codex): failed: "the test timed out".',
-        '- t3 "working" (Codex): working for 4 min.',
-        '- t4 "new-done" (Codex): finished 10 min ago.',
-        '- t5 "settled" (Codex): failed: "old failure".',
+        '- t1 "approval" (Codex, main checkout): needs approval to run a command.',
+        '- t2 "broken" (Codex, main checkout): failed: "the test timed out".',
+        '- t3 "working" (Codex, worktree "t3/fix-cart"): working for 4 min.',
+        '- t4 "new-done" (Codex, main checkout): finished 10 min ago.',
+        '- t5 "settled" (Codex, main checkout): failed: "old failure".',
         "1 more thread left out. To reach one, pass its title as the thread.",
         'Projects: "shop".',
       ].join("\n"),

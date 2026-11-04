@@ -18,6 +18,7 @@ import {
 import {
   clip,
   quoted,
+  voiceWorkspace,
   SUBAGENT_OUT_OF_REACH,
   voiceApprovalDetail,
   voicePendingAnswer,
@@ -39,17 +40,17 @@ import type {
 } from "./types.ts";
 
 /**
- * The requests the agent was given to say or read this call, in order with the user's
- * transcripts. A voice answer counts only once the user spoke after the agent heard of the
- * request, so a yes never lands on a request nobody told them about.
+ * The requests and questions the agent was given to say or read this call, in order with the
+ * user's transcripts. A voice answer counts only once the user spoke after the agent heard of
+ * the request, so a yes never lands on a request nobody told them about.
  */
 export class VoiceHeardRequests {
-  private readonly heard = new Map<RuntimeRequestId, { readonly first: number; last: number }>();
+  private readonly heard = new Map<string, { readonly first: number; last: number }>();
   private sequence = 0;
   private userSpokeAt = 0;
 
   /** The agent got the request to say or read: a spoken update, or a tool result. */
-  mark(requestId: RuntimeRequestId): void {
+  mark(requestId: string): void {
     this.sequence += 1;
     const heard = this.heard.get(requestId);
     if (heard === undefined) {
@@ -65,12 +66,17 @@ export class VoiceHeardRequests {
     this.userSpokeAt = this.sequence;
   }
 
-  has(requestId: RuntimeRequestId): boolean {
+  has(requestId: string): boolean {
     return this.heard.has(requestId);
   }
 
+  /** The question was settled, so asking it again needs a fresh answer. */
+  forget(requestId: string): void {
+    this.heard.delete(requestId);
+  }
+
   /** The user spoke after the agent first heard of the request. */
-  userSpokeSince(requestId: RuntimeRequestId): boolean {
+  userSpokeSince(requestId: string): boolean {
     const heard = this.heard.get(requestId);
     return heard !== undefined && this.userSpokeAt > heard.first;
   }
@@ -325,6 +331,22 @@ const SEND_RESULTS: Record<VoiceDelivery, (handle: string, provider: string) => 
     `Queued for ${handle}. ${provider} gets it when the current turn ends.`,
 };
 
+const SEND_TASKS = ["same", "new", "new_keep_here"] as const;
+
+const START_WORKSPACES = { new_worktree: "worktree", local: "local" } as const;
+
+/** The heard id of "new worktree or the same one?" for a thread. */
+const workspaceQuestion = (row: VoiceThreadRow) => `workspace:${row.key}`;
+
+function askWhere(row: VoiceThreadRow, handle: string): string {
+  return (
+    `Not sent: that looks like a different task from what ${handle} ${quoted(row.title, 80)} is doing in its ${voiceWorkspace(row)}. ` +
+    'Ask the user one short question, like "This looks different from the checkout fix. Want a new worktree for it, or the same one?" ' +
+    `New worktree: call t3_start_thread with project ${quoted(row.project, 80)} and workspace new_worktree. ` +
+    "Same one: call this again with task new_keep_here. If they say it is part of the same work after all, call again with task same."
+  );
+}
+
 const SEND_FEED: Record<VoiceDelivery, string> = {
   started: "sent",
   steered: "steered",
@@ -335,6 +357,12 @@ const SEND_FEED: Record<VoiceDelivery, string> = {
 export function createVoiceTools(
   context: VoiceToolContext,
 ): Record<VoiceAgentToolName, VoiceToolHandler> {
+  const askedWhere = new Set<string>();
+  /** The user answered where the new task goes, so a later one gets asked afresh. */
+  const settleWhere = () => {
+    for (const question of askedWhere) context.heard.forget(question);
+    askedWhere.clear();
+  };
   return {
     [VOICE_AGENT_TOOL_NAMES.sendToThread]: async (parameters) => {
       const prompt = text(parameters.prompt);
@@ -342,7 +370,21 @@ export function createVoiceTools(
       const target = resolveThread(context, parameters.thread);
       if (!target.ok) return target.reply;
       const { row, handle } = target.value;
+      const task = SEND_TASKS.find((candidate) => candidate === parameters.task);
+      if (task === undefined) {
+        return "Pass task: same when it continues this thread's work, new when it is a different task.";
+      }
       if (!context.userSpokeLast()) return ASK_FIRST;
+      const question = workspaceQuestion(row);
+      // A thread with no turns has no task yet for the request to clash with.
+      if (task !== "same" && row.shell.latestRun !== null) {
+        const chose = task === "new_keep_here" && context.heard.userSpokeSince(question);
+        if (!chose) {
+          askedWhere.add(question);
+          context.heard.mark(question);
+          return askWhere(row, handle);
+        }
+      }
       let delivery: VoiceDelivery;
       try {
         delivery = await context.actions.send({
@@ -355,6 +397,7 @@ export function createVoiceTools(
       } catch (error) {
         return `That did not go through: ${failure(error)}. Tell the user it failed.`;
       }
+      if (task !== "same") settleWhere();
       const summary = text(parameters.summary) || clip(prompt, 60);
       context.record({
         tone: "action",
@@ -514,12 +557,17 @@ export function createVoiceTools(
       if (prompt === "") return "No prompt given: put what the new thread should do in prompt.";
       const target = resolveProject(context, parameters.project);
       if (!target.ok) return target.reply;
+      const workspace = Object.entries(START_WORKSPACES).find(
+        ([name]) => name === parameters.workspace,
+      )?.[1];
+      if (workspace === undefined) return "Pass workspace: new_worktree or local.";
       if (!context.userSpokeLast()) return ASK_FIRST;
       const project = target.value;
       const summary = text(parameters.summary) || clip(prompt, 60);
       let handle: string;
       try {
-        const ref = await context.actions.startThread({ project, prompt, summary });
+        const ref = await context.actions.startThread({ project, prompt, summary, workspace });
+        settleWhere();
         handle = context.handles.of(scopedThreadKey(ref));
       } catch (error) {
         return `Could not start the thread: ${failure(error)}.`;

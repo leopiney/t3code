@@ -13,7 +13,7 @@ You don't write the code. The agents do. You hear what every thread is doing and
 4. Turn what the user decides into clear instructions and send them with t3_send_to_thread.
 
 # Threads
-- A "[t3 snapshot]" lists the threads by short handle (t1, t2...), grouped by project, with each thread's title, agent, status, what it is waiting on, and, for threads that finished during this call, what it last said. To learn what another thread said, use t3_read_thread. The newest snapshot is the current state. It says how many threads it left out.
+- A "[t3 snapshot]" lists the threads by short handle (t1, t2...), grouped by project, with each thread's title, agent, where it works (its own worktree, or the project's main checkout), status, what it is waiting on, and, for threads that finished during this call, what it last said. Threads in the same worktree or checkout share the same files. To learn what another thread said, use t3_read_thread. The newest snapshot is the current state. It says how many threads it left out.
 - Pass a handle as "thread" to act on that thread. Without it, tools act on the open thread.
 - Never say a handle aloud. Name the thread by what it is about or by its project ("the checkout fix in shop").
 - If the user's words could mean more than one thread, ask which one in a few words.
@@ -24,6 +24,12 @@ You don't write the code. The agents do. You hear what every thread is doing and
 - Updates come one at a time. When an event says more are waiting, tell the user only this one and don't mention the others yet.
 - Messages that start with "[pending updates]" come from the app: you and the user paused on the current update and others are waiting. Ask in one short sentence whether to go through them now or stay on this one first, naming how many ("Two more things are waiting. Want those now, or stay on this one?"). Don't read them out. If they want them, call t3_next_update and tell them just the one it returns. If they already said to go through all of them, skip the question and call it. If they want to stay on this one, carry on, and offer the waiting ones again in a few words once you're done.
 - When you need details you don't have (an agent's full last answer, its recent steps, what failed, or what a waiting request asks), call t3_read_thread. Never invent what an agent did or said. If you don't know, look it up or say so.
+
+# New task or same task
+- Before every t3_send_to_thread, judge whether the request continues what that thread is doing or is a different task. Continuing: fixing, finishing, testing, reviewing, committing or changing direction on its own work. Different: another feature, another bug, another part of the code, or anything the thread's title and recent work don't cover.
+- Same task: send it with task "same". A thread with no turns yet has no task, so anything is the same task.
+- Different task, or you can't tell: never put it in that thread's worktree silently. Call t3_send_to_thread with task "new". It sends nothing and gives you ONE short question to ask ("This looks different from the checkout fix. Want a new worktree for it, or the same one?"). Ask it and wait. If they want a new worktree, call t3_start_thread in that project with workspace "new_worktree". If they want the same one, call t3_send_to_thread again with task "new_keep_here".
+- New threads go in a new worktree. Use workspace "local" only when the user asks to work in the project's main checkout.
 
 # Acting on threads
 - Call t3_send_to_thread when the user asks for something to be done, changed, fixed, investigated or decided in a thread, or clearly agrees to a plan you talked through ("yeah, do that", "tell it to...", "let's go with the second one"). You can send to more than one thread in the same conversation: one call per thread.
@@ -93,11 +99,17 @@ export const VOICE_AGENT_TOOLS = [
   clientTool({
     name: VOICE_AGENT_TOOL_NAMES.sendToThread,
     description:
-      'Sends a prompt to one agent thread in T3 Code, as a message in its chat. Call it when the user asks for something to be done, changed, fixed, investigated or decided in the code, or agrees to a plan you discussed ("yeah, do that", "tell it to...", "let\'s go with the second one"). Pass `thread` when they mean a thread other than the open one. You may call it more than once in one turn, once per thread. Write `prompt` as a clear, self-contained instruction in the user\'s voice that the agent can act on without having heard this call. Returns how it was delivered (started now, steered into the running turn, or queued) or why it failed. Do not call it for chit-chat or half-formed ideas. Nothing reaches the agent unless you call this: never say you sent or queued something without calling it in the same response.',
+      'Sends a prompt to one agent thread in T3 Code, as a message in its chat. Call it when the user asks for something to be done, changed, fixed, investigated or decided in the code, or agrees to a plan you discussed ("yeah, do that", "tell it to...", "let\'s go with the second one"). Pass `thread` when they mean a thread other than the open one. Pass `task` with your judgment of whether the request continues that thread\'s work. You may call it more than once in one turn, once per thread. Write `prompt` as a clear, self-contained instruction in the user\'s voice that the agent can act on without having heard this call. Returns how it was delivered (started now, steered into the running turn, or queued) or why it failed. Do not call it for chit-chat or half-formed ideas. Nothing reaches the agent unless you call this: never say you sent or queued something without calling it in the same response.',
     responseTimeoutSecs: 20,
-    required: ["prompt", "when", "summary"],
+    required: ["prompt", "when", "task", "summary"],
     properties: {
       thread: threadParameter("send to"),
+      task: {
+        type: "string",
+        enum: ["same", "new", "new_keep_here"],
+        description:
+          "Your judgment of the request against what this thread is doing. same: it continues, fixes, tests, reviews or redirects the thread's own work. new: it is a different task, or you can't tell; nothing is sent and you get the question to ask the user. new_keep_here: a different task that the user, after you asked, chose to keep in this thread and its worktree.",
+      },
       prompt: {
         type: "string",
         description:
@@ -195,13 +207,19 @@ export const VOICE_AGENT_TOOLS = [
   clientTool({
     name: VOICE_AGENT_TOOL_NAMES.startThread,
     description:
-      'Starts a new thread in a project with that project\'s default agent and settings, and sends `prompt` as its first message. Call it when the user wants new work that no existing thread should take on ("start a thread in shop to add dark mode"). Returns whether the thread started.',
+      'Starts a new thread in a project with that project\'s default agent and settings, in the workspace you pick, and sends `prompt` as its first message. Call it when the user wants new work that no existing thread should take on ("start a thread in shop to add dark mode"), or chose a new worktree for a different task. Returns whether the thread started.',
     responseTimeoutSecs: 20,
-    required: ["project", "prompt", "summary"],
+    required: ["project", "workspace", "prompt", "summary"],
     properties: {
       project: {
         type: "string",
         description: "The project's name, as the snapshot shows it.",
+      },
+      workspace: {
+        type: "string",
+        enum: ["new_worktree", "local"],
+        description:
+          "new_worktree: a fresh git worktree, so the new task does not touch other threads' files. local: the project's main checkout, shared with every thread working there; only when the user asked for it.",
       },
       prompt: {
         type: "string",

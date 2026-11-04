@@ -44,6 +44,9 @@ reach it, so you can ask what happened.
 - Browsers lend the microphone only to secure pages. Open T3 Code over `https` or on `localhost` to
   call from a browser.
 - By voice, T3Bud approves a request once or declines it. Approve for the whole session in the app.
+- When you ask for something that looks like a different task from what a thread is doing, T3Bud
+  asks whether it gets a new worktree or stays in the same one before sending it. Threads T3Bud
+  starts get a new worktree unless you ask for the project's main checkout.
 - During a call, ElevenLabs receives your thread titles, statuses, recent messages, and the steps of
   running threads, so the agent can talk about them.
 - T3 Code owns the agent's prompt, tools, and voice. Changes you make to those in the ElevenLabs

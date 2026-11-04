@@ -116,6 +116,7 @@ describe("t3_send_to_thread", () => {
         thread: "t1",
         prompt: "Fix the lint too",
         when,
+        task: "same",
         summary: "fix the lint",
       });
 
@@ -140,6 +141,101 @@ describe("t3_send_to_thread", () => {
       "No thread is open in the app. Pass thread with the handle of the one you mean.",
     );
     expect(actions.send).not.toHaveBeenCalled();
+  });
+
+  it("asks new worktree or same one before a different task reuses a thread's workspace", async () => {
+    const thread = shell("cart", {
+      ...finishedFields("cart", T0 - 60_000),
+      branch: "t3/fix-cart",
+      worktreePath: "/worktrees/fix-cart",
+    });
+    const { tools, actions, heard } = harness(thread);
+    const send = (task?: string) =>
+      tools[VOICE_AGENT_TOOL_NAMES.sendToThread]({
+        thread: "t1",
+        prompt: "Add dark mode",
+        when: "now",
+        ...(task === undefined ? {} : { task }),
+      });
+    const asked =
+      'Not sent: that looks like a different task from what t1 "cart" is doing in its worktree "t3/fix-cart". ' +
+      'Ask the user one short question, like "This looks different from the checkout fix. Want a new worktree for it, or the same one?" ' +
+      'New worktree: call t3_start_thread with project "shop" and workspace new_worktree. ' +
+      "Same one: call this again with task new_keep_here. If they say it is part of the same work after all, call again with task same.";
+
+    expect(await send()).toBe(
+      "Pass task: same when it continues this thread's work, new when it is a different task.",
+    );
+    expect(await send("new")).toBe(asked);
+    // Keeping it here needs the user's word after the question.
+    expect(await send("new_keep_here")).toBe(asked);
+    expect(actions.send).not.toHaveBeenCalled();
+
+    heard.userSpoke();
+    expect(await send("new_keep_here")).toBe("Sent to t1. Codex started on it.");
+    // The answer covered that one request; the next different task is asked afresh.
+    heard.userSpoke();
+    expect(await send("new_keep_here")).toBe(asked);
+
+    heard.userSpoke();
+    expect(
+      await tools[VOICE_AGENT_TOOL_NAMES.startThread]({
+        project: "shop",
+        workspace: "new_worktree",
+        prompt: "Add dark mode",
+        summary: "Add dark mode",
+      }),
+    ).toBe('Started t2 in "shop". It is working on it.');
+    expect(actions.startThread).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: "Add dark mode", workspace: "worktree" }),
+    );
+    heard.userSpoke();
+    expect(await send("new_keep_here")).toBe(asked);
+    expect(actions.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends a new task to a thread with no turns yet without asking", async () => {
+    const { tools, actions } = harness(shell("fresh"));
+
+    expect(
+      await tools[VOICE_AGENT_TOOL_NAMES.sendToThread]({
+        prompt: "Add dark mode",
+        when: "now",
+        task: "new",
+      }),
+    ).toBe("Sent to t1. Codex started on it.");
+    expect(actions.send).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("t3_start_thread", () => {
+  it.each([
+    ["new_worktree", "worktree"],
+    ["local", "local"],
+  ] as const)("starts in workspace %s as %s", async (workspace, mode) => {
+    const { tools, actions } = harness(shell("cart"));
+
+    await tools[VOICE_AGENT_TOOL_NAMES.startThread]({
+      project: "shop",
+      workspace,
+      prompt: "Add dark mode",
+      summary: "Add dark mode",
+    });
+
+    expect(actions.startThread).toHaveBeenCalledWith(expect.objectContaining({ workspace: mode }));
+  });
+
+  it("does not start without a workspace", async () => {
+    const { tools, actions } = harness(shell("cart"));
+
+    expect(
+      await tools[VOICE_AGENT_TOOL_NAMES.startThread]({
+        project: "shop",
+        prompt: "Add dark mode",
+        summary: "Add dark mode",
+      }),
+    ).toBe("Pass workspace: new_worktree or local.");
+    expect(actions.startThread).not.toHaveBeenCalled();
   });
 });
 

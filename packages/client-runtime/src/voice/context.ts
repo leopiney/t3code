@@ -308,6 +308,13 @@ function voiceStatusText(row: VoiceThreadRow, now: number): string {
   }
 }
 
+/** Where a thread works. Threads that share one are working in the same files. */
+export function voiceWorkspace(row: VoiceThreadRow): string {
+  const { worktreePath, branch } = row.shell;
+  if (worktreePath === null) return "main checkout";
+  return branch === null ? "a worktree" : `worktree ${quoted(branch, 60)}`;
+}
+
 function voiceRowLine(
   row: VoiceThreadRow,
   handle: string,
@@ -316,7 +323,7 @@ function voiceRowLine(
 ): string {
   const message =
     row.status === "ready" && lastMessage ? ` Last message: ${quoted(lastMessage, 160)}` : "";
-  return `${handle} ${quoted(row.title, 80)} (${row.provider}): ${voiceStatusText(row, now)}.${message}`;
+  return `${handle} ${quoted(row.title, 80)} (${row.provider}, ${voiceWorkspace(row)}): ${voiceStatusText(row, now)}.${message}`;
 }
 
 export interface VoiceSnapshotOptions {

@@ -16,7 +16,7 @@ import {
 import { VoiceSession } from "@t3tools/client-runtime/voice/session";
 import type { VoiceCallToken, VoiceStartThreadInput } from "@t3tools/client-runtime/voice/types";
 import { DEFAULT_SERVER_SETTINGS, VoiceAgentError, type ScopedThreadRef } from "@t3tools/contracts";
-import { resolveNewThreadEnvMode, resolveProjectSettings } from "@t3tools/shared/projectSettings";
+import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import type { AnyRouter } from "@tanstack/react-router";
 
 import { useComposerDraftStore } from "../../composerDraftStore";
@@ -25,8 +25,6 @@ import { resolveNewThreadModelDefaults } from "../../lib/chatThreadActions";
 import { readT3ProjectFile } from "../../lib/t3ProjectFileDefaults";
 import { newMessageId, newThreadId } from "../../lib/utils";
 import { appAtomRegistry } from "../../rpc/atomRegistry";
-import { readThreadShells } from "../../state/entities";
-import { readUnloadedThreadCount } from "../../state/olderSettledShelf";
 import { environmentPresentations, environmentSummaries } from "../../state/presentation";
 import { environmentProjects } from "../../state/projects";
 import { environmentServerConfigsAtom } from "../../state/server";
@@ -65,13 +63,14 @@ async function createCallToken(): Promise<VoiceCallToken> {
 
 /**
  * A new thread with the project's defaults, as New thread picks them: its model (or the
- * composer's last pick), permission mode and workspace mode. A new worktree branches from the
- * checkout's current branch.
+ * composer's last pick) and permission mode, in the workspace T3Bud asked for. A new worktree
+ * branches from the checkout's current branch.
  */
 async function startThread({
   project,
   prompt,
   summary,
+  workspace,
 }: VoiceStartThreadInput): Promise<ScopedThreadRef> {
   const { environmentId } = project;
   // Environment reads wait for a connection; an offline project would hang the tool call.
@@ -104,15 +103,7 @@ async function startThread({
   const envMode =
     project.workspaceRoot === "" || isScratchProject(project, serverConfig?.scratchWorkspaceRoot)
       ? "local"
-      : resolveNewThreadEnvMode({
-          projectSettings,
-          workspaceRoot: project.workspaceRoot,
-          newProjectsRoot: serverConfig?.newProjectsRoot,
-          projectHasThreads:
-            readThreadShells().some(
-              (thread) => thread.environmentId === environmentId && thread.projectId === project.id,
-            ) || readUnloadedThreadCount([{ environmentId, id: project.id }], []) > 0,
-        });
+      : workspace;
   let worktree: { readonly baseBranch: string; readonly startFromOrigin: boolean } | null = null;
   if (envMode === "worktree") {
     const status = unwrap(

@@ -148,6 +148,8 @@ export interface VoiceStartThreadInput {
   readonly prompt: string;
   /** A few words naming the request, usable as a title seed. */
   readonly summary: string;
+  /** A worktree of its own, or the project's main checkout. Projects without a repo always use the checkout. */
+  readonly workspace: "worktree" | "local";
 }
 
 /** What the agent's tools do. Each rejects with an error whose message the agent reads back. */
@@ -166,7 +168,7 @@ export interface VoiceActions {
   ) => Promise<void>;
   readonly readThread: (ref: ScopedThreadRef) => Promise<OrchestrationV2ThreadProjection>;
   readonly openThread: (ref: ScopedThreadRef) => void | Promise<void>;
-  /** Starts a thread with the project's defaults, as the new-thread UI does. */
+  /** Starts a thread with the project's defaults, as the new-thread UI does, in the workspace asked for. */
   readonly startThread: (input: VoiceStartThreadInput) => Promise<ScopedThreadRef>;
 }
 

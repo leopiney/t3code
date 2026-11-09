@@ -13,7 +13,7 @@ environment.
 ## Setting it up
 
 1. Create an ElevenLabs API key with access to ElevenLabs Agents.
-2. Open **Settings** > **Voice**, pick the environment that should keep the key, and save it. The
+2. Open **Settings** > **Voice agent**, pick the environment that should keep the key, and save it. The
    key stays on that environment; clients only see whether one is set.
 3. Select **Set up voice agent** to check the key. This creates an agent named "T3Bud"
    in your ElevenLabs account. Without this step, the first call does it, which takes a few seconds.
@@ -35,7 +35,7 @@ button.
 Show or hide T3Bud with `mod+alt+shift+b` or **Show T3Bud** / **Hide T3Bud** in the command
 palette. Hiding it ends a call.
 
-**Speak updates aloud** in **Settings** > **Voice** chooses what T3Bud says without being asked:
+**Speak updates aloud** in **Settings** > **Voice agent** chooses what T3Bud says without being asked:
 finished work and what needs you, only what needs you, or nothing. Updates it does not speak still
 reach it, so you can ask what happened.
 

@@ -385,7 +385,7 @@ const stubExecutables = (names: ReadonlyArray<string>) =>
   });
 
 const decodeEncodedPowerShell = (command: ChildProcess.StandardCommand) =>
-  Buffer.from(command.args.at(-1) ?? "", "base64").toString("utf16le");
+  Buffer.from(String(command.args.at(-1) ?? ""), "base64").toString("utf16le");
 
 it.effect.skipIf(windowsHost)("opens an HTML file in the default macOS browser", () =>
   Effect.gen(function* () {

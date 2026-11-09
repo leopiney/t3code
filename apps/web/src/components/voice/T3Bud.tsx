@@ -265,7 +265,10 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
               <p role="alert" className="text-sm text-destructive-foreground">
                 {state.error}
               </p>
-              <InlineButton tone="muted" onClick={() => void navigate({ to: "/settings/voice-agent" })}>
+              <InlineButton
+                tone="muted"
+                onClick={() => void navigate({ to: "/settings/voice-agent" })}
+              >
                 Voice settings
               </InlineButton>
             </div>
@@ -273,7 +276,10 @@ function T3BudWidget({ session, state }: { session: VoiceSession; state: VoiceSe
             <div className="flex flex-col items-start gap-1 text-xs">
               <p className="text-muted-foreground">{CALL_BLOCKED_REASON[readiness]}</p>
               {readiness === "noKey" ? (
-                <InlineButton tone="muted" onClick={() => void navigate({ to: "/settings/voice-agent" })}>
+                <InlineButton
+                  tone="muted"
+                  onClick={() => void navigate({ to: "/settings/voice-agent" })}
+                >
                   Voice settings
                 </InlineButton>
               ) : null}

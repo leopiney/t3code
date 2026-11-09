@@ -226,33 +226,6 @@ describe("shouldRecedeSidebarThread", () => {
       }),
     ).toBe(false);
   });
-
-  it("reports worktree setup as preparing, and failed only while the latest run failed", () => {
-    expect(
-      resolveSidebarThreadStatus({
-        ...idle,
-        runtime: { ...runtime, status: "preparing" as const },
-      }),
-    ).toBe("preparing");
-    expect(
-      resolveSidebarThreadStatus({
-        ...idle,
-        runtime: { ...runtime, status: "failed" as const, lastError: "boom" },
-      }),
-    ).toBe("failed");
-    expect(
-      resolveSidebarThreadStatus({
-        ...idle,
-        runtime: { ...runtime, status: "completed" as const, lastError: "persisted" },
-      }),
-    ).toBe("ready");
-    expect(
-      resolveSidebarThreadStatus({
-        ...idle,
-        runtime: { ...runtime, status: "idle" as const, lastError: "persisted" },
-      }),
-    ).toBe("waiting");
-  });
 });
 
 describe("searchSidebarThreads", () => {

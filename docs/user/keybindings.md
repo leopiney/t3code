@@ -38,9 +38,8 @@ Use `mod+shift+l` to reuse the previous worktree directly.
 `shift+tab` cycles effort forward one level without opening the picker. It wraps
 from the highest level to the lowest. Bind **Composer: Decrease Effort** to step
 the other way; that shortcut is unbound by default. In a code block, `shift+tab`
-still changes indentation. With **Settings → Labs → Plan mode (legacy)** on,
-`shift+tab` still switches Build and Plan. Change the cycle under
-**Composer: Increase Effort** in Keybindings.
+still changes indentation. Change the cycle under **Composer: Increase Effort**
+in Keybindings.
 
 In the model picker, press Left in an empty search field or Shift+Tab to reach
 the provider list. Use Up/Down to move and Enter to choose. Right returns to

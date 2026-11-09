@@ -310,7 +310,10 @@ const config: ExpoConfig = {
     predictiveBackGestureEnabled: true,
     // expo-sensors declares this for its pedometer, and the WebRTC plugin the overlay permission
     // that screen sharing needs; the app uses neither.
-    blockedPermissions: ["android.permission.ACTIVITY_RECOGNITION", "android.permission.SYSTEM_ALERT_WINDOW"],
+    blockedPermissions: [
+      "android.permission.ACTIVITY_RECOGNITION",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+    ],
     intentFilters: [
       {
         action: "VIEW",

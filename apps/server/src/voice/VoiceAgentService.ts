@@ -1,3 +1,5 @@
+// @effect-diagnostics nodeBuiltinImport:off
+import * as NodeCrypto from "node:crypto";
 import {
   type ServerSettingsError,
   TrimmedNonEmptyString,
@@ -8,9 +10,7 @@ import {
 import { writeFileStringAtomically } from "@t3tools/shared/atomicWrite";
 import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
-import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
-import * as Hex from "effect/encoding/Hex";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
@@ -125,11 +125,8 @@ const make = Effect.gen(function* () {
   const config = yield* ServerConfig.ServerConfig;
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const crypto = yield* Crypto.Crypto;
   const sha256 = (value: string) =>
-    crypto
-      .digest("SHA-256", new TextEncoder().encode(value))
-      .pipe(Effect.map(Hex.encode), Effect.orDie);
+    Effect.sync(() => NodeCrypto.createHash("sha256").update(value).digest("hex"));
   const definitionHash = (yield* sha256(DEFINITION_JSON)).slice(0, 12);
   // The agent is shared by every T3 server on the key, so it carries which definition it holds.
   const definitionTag = `${DEFINITION_TAG_PREFIX}${definitionHash}`;

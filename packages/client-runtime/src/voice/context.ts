@@ -138,6 +138,7 @@ function statusSince(status: ThreadStatus, thread: EnvironmentThreadShell): numb
       const pending = thread.source.pendingRuntimeRequest;
       return pending === null ? null : DateTime.toEpochMillis(pending.createdAt);
     }
+    case "preparing":
     case "working":
     case "waiting":
       return (
@@ -215,6 +216,7 @@ const STATUS_RANK: Record<ThreadStatus, number> = {
   request: 0,
   failed: 0,
   limited: 0,
+  preparing: 1,
   working: 1,
   waiting: 1,
   ready: 2,
@@ -287,6 +289,8 @@ function voiceStatusText(row: VoiceThreadRow, now: number): string {
       return "has a question for the user";
     case "request":
       return "has a guest message waiting for review";
+    case "preparing":
+      return "preparing a worktree";
     case "working":
       return since === null ? "working" : `working for ${duration(since)}`;
     case "waiting":

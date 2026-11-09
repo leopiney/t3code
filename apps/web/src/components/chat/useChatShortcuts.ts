@@ -95,7 +95,7 @@ export function useChatShortcuts(input: ChatShortcutsInput) {
       context: shortcutContext,
     });
     if (!command) return;
-    // Code blocks, citation comments, and legacy Plan mode keep Shift+Tab.
+    // Code blocks and citation comments keep Shift+Tab.
     if (isBareShiftTab(event) && input.composerRef.current?.ownsShiftTab() === true) return;
     const run =
       input.commands[command] ??

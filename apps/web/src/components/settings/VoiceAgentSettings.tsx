@@ -362,8 +362,7 @@ function ElevenLabsSettings({ environment }: { readonly environment: Environment
         description={
           <>
             Kept on {environment.label}. Calls go through a connected environment that has a key and
-            lets this device call, the primary one first. Clients only learn whether it is set. Give
-            the key access to ElevenLabs Agents.{" "}
+            lets this device call, the primary one first. Give the key access to ElevenLabs Agents.{" "}
             <InlineButton
               tone="muted"
               render={

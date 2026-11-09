@@ -293,7 +293,7 @@ export interface ChatComposerHandle {
   openModelPicker: () => void;
   /** False when this model has no effort level to step to, so the key keeps its other job. */
   stepReasoningEffort: (direction: 1 | -1) => boolean;
-  /** Code blocks, citation comments, and legacy Plan mode keep Shift+Tab. */
+  /** Code blocks and citation comments keep Shift+Tab. */
   ownsShiftTab: () => boolean;
   toggleModelPicker: () => void;
   openControl: (command: KeybindingCommand) => void;
@@ -2909,7 +2909,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           { ensureLeadingBoundary: true, citationCommentAnchor: sourceAnchor },
         ),
       openModelPicker: openModelPickerStable,
-      ownsShiftTab: () => planModeUiEnabled || composerEditorRef.current?.ownsShiftTab() === true,
+      ownsShiftTab: () => composerEditorRef.current?.ownsShiftTab() === true,
       stepReasoningEffort: (direction) => {
         if (noProviderAvailable || pendingUserInputs.length > 0 || isEditingQueuedMessage) {
           return false;

@@ -390,7 +390,7 @@ function ElevenLabsKeySection(props: {
           {hasKey ? (
             <>
               <SettingsActionRow
-                icon="sparkles"
+                icon="hammer"
                 label="Set up voice agent"
                 description="Checks the key and creates or updates T3Bud in your ElevenLabs account."
                 loading={pending === "setup"}
